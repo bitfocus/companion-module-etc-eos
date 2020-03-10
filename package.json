@@ -1,6 +1,6 @@
 {
 	"name": "etc-eos",
-	"version": "1.0.0",
+	"version": "1.2.0",
 	"api_version": "1.0.0",
 	"keywords": [
 		"Lighting"
@@ -13,5 +13,8 @@
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"author": "Steve Therrien <git@stevetherrien.ca>",
-	"license": "MIT"
+	"license": "MIT",
+	"dependencies": {
+		"osc": "^2.4.0"
+	}
 }
