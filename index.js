@@ -194,7 +194,7 @@ instance.prototype.defineFeedbacks = function() {
 
 	feedbacks['connected'] = {
 		label: 'When connection to console changes',
-		description: 'Change colors the connection state to the console changes',
+		description: 'Change colors when the connection state to the console changes',
 		options: [
 			{
 				type: 'colorpicker',
@@ -374,6 +374,7 @@ instance.prototype.feedback = function(feedback) {
 	}
 
 	if (feedback.type === 'connected') {
+		// The connection to the console changed.
 
 		if (feedback.options.connected === self.instanceState['connected']) {
 
