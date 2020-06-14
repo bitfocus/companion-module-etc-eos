@@ -41,11 +41,13 @@ While it's not practical to create specific actions for every possible command a
 | Action              | Description                                                  |
 | ------------------- | ------------------------------------------------------------ |
 | Custom Command      | Runs a custom command. See the section below for more information. |
+| Key: Blackout       | Toggles the **Blackout** button. |
 | Key: Go             | Runs the next cue in the current list.<br />This is the same as pressing the **Go** button on your console. |
 | Key: Stop/Back      | Press once to stop the current cue (if it's running), and again to move back to the previous cue in the list.<br />This is the same as pressing the **Stop/Back** button on your console. |
 | Run Cue             | Runs a specific cue in a cue list.                           |
-| Run Macro | Runs a specific macro. |
-| Channel Intensity   | Sets a channel's intensity to a percentage, or to keyword: `out`, `full`, `min`, `max`. |
+| Run Macro           | Runs a specific macro. |
+| Press Key           | Presses one of the console's keys. A full list of keys can be found in the latest [Eos Family Operations Manual](https://www.etcconnect.com/WorkArea/DownloadAsset.aspx?id=10737500523) (links to v2.9.1); do a search for `Eos OSC Keys` (use the value from the first column). |
+| Channel Intensity   | Sets a channel's intensity to a percentage, or to a keyword: `out`, `full`, `min`, `max`. |
 | Group Intensity     | Sets a group's intensity to a percentage, or to a keyword: `out`, `full`, `min`, `max`. |
 | Submaster Intensity | Sets a submaster's intensity to a percentage, or to a keyword: `out`, `full`, `min`, `max`. |
 | Submaster Bump      | Simulates a submaster's bump button. The **State** property can be:<br />  - Press and Release<br />  - Press and Hold<br />  - Release<br /><br />*Hint: Add this action to a down/on action to **Press and Hold**, and a **Release** action to up/off, then make the button **Latch/Toggle**.* |

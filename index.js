@@ -856,6 +856,10 @@ instance.prototype.actions = function(system) {
 			]
 		},
 
+		'blackout': {
+			label: 'Key: Blackout',
+		},
+
 		'next_cue': {
 			label: 'Key: Go',
 		},
@@ -893,6 +897,19 @@ instance.prototype.actions = function(system) {
 					id: 'macro',
 					default: '1',
 					regex: self.REGEX_NUMBER,
+				},
+			]
+		},
+
+		'press_key': {
+			label: 'Press Key',
+			options: [
+				{
+					type: 'textinput',
+					label: 'Key',
+					id: 'key',
+					default: '',
+					tooltip: "See the module's help for information.",
 				},
 			]
 		},
@@ -1018,6 +1035,16 @@ instance.prototype.action = function(action) {
 
 		case 'run_macro':
 			self.sendOsc('macro/fire', [ { type: 'i', value: opt.macro } ]);
+			break;
+
+
+		case 'press_key':
+			self.sendOsc('key/' + opt.key, [ ]);
+			break;
+
+
+		case 'blackout':
+			self.sendOsc('key/blackout', [ ]);
 			break;
 
 
