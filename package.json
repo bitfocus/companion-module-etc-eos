@@ -16,5 +16,13 @@
 	"license": "MIT",
 	"dependencies": {
 		"osc": "^2.4.0"
+	},
+	"homepage": "https://github.com/bitfocus/companion-module-etc-eos#readme",
+	"bugs": {
+		"url": "https://github.com/bitfocus/companion-module-etc-eos/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/bitfocus/companion-module-etc-eos.git"
 	}
 }
