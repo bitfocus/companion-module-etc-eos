@@ -770,15 +770,22 @@ instance.prototype.parseCueName = function(type, cueName) {
 	// Cue name will look something like:
 	//  51.1 Drums 3.0 100%
 	//  <CUE NUMBER> <LABEL> <DURATION> [<INTENSITY PERCENTAGE>]
-	let matches = cueName.match(/^([\d\.]+) (.*?) ([\d\.]+)( ([\d\.]+%))?$/);
+	//
+	// or, if the cue doesn't have a label:
+	//  51.1 3.0 100%
+	//  <CUE NUMBER> <DURATION> [<INTENSITY PERCENTAGE>]
+	let matches = cueName.match(/^(?<CUE_NUMBER>[\d\.]+)( (?<LABEL>.*?))? (?<DURATION>[\d\.]+)( (?<INTENSITY>[\d\.]+%))?$/);
 
-	if (matches !== null && matches.length >= 3) {
+	self.log('warn', JSON.stringify(matches));
+	self.log('warn', JSON.stringify(matches.group));
+
+	if (matches !== null && matches.length >= 6) {
 		// Parse the response.
-		self.setInstanceState(`cue_${type}_label`, matches[2], true);
-		self.setInstanceState(`cue_${type}_duration`, matches[3], true);
+		self.setInstanceState(`cue_${type}_label`, matches[2] || matches[1], true);
+		self.setInstanceState(`cue_${type}_duration`, matches[4], true);
 
 		if (matches.length === 6) {
-			self.setInstanceState(`cue_${type}_intensity`, matches[5], true);
+			self.setInstanceState(`cue_${type}_intensity`, matches[6], true);
 		}
 
 	} else {
@@ -1193,7 +1200,7 @@ instance.prototype.sendOsc = function(path, args, appendPrefix) {
 	};
 
 	if (self.debugToLogger) {
-		self.log('warn', `Eos: Sending packet: ${JSON.stringify(packet)}`)
+		self.log('warn', `Eos: Sending packet: ${JSON.stringify(packet)}`);
 	}
 
 	self.oscSocket.send(packet);
