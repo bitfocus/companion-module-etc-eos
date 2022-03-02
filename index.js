@@ -770,15 +770,19 @@ instance.prototype.parseCueName = function(type, cueName) {
 	// Cue name will look something like:
 	//  51.1 Drums 3.0 100%
 	//  <CUE NUMBER> <LABEL> <DURATION> [<INTENSITY PERCENTAGE>]
-	let matches = cueName.match(/^([\d\.]+) (.*?) ([\d\.]+)( ([\d\.]+%))?$/);
+	//
+	// or, if the cue doesn't have a label:
+	//  51.1 3.0 100%
+	//  <CUE NUMBER> <DURATION> [<INTENSITY PERCENTAGE>]
+	let matches = cueName.match(/^(?<CUE_NUMBER>[\d\.]+)( (?<LABEL>.*?))? (?<DURATION>[\d\.]+)( (?<INTENSITY>[\d\.]+%))?$/);
 
-	if (matches !== null && matches.length >= 3) {
+	if (matches !== null && matches.length >= 6) {
 		// Parse the response.
-		self.setInstanceState(`cue_${type}_label`, matches[2], true);
-		self.setInstanceState(`cue_${type}_duration`, matches[3], true);
+		self.setInstanceState(`cue_${type}_label`, matches[2] || matches[1], true);   // Use cue number if label not available.
+		self.setInstanceState(`cue_${type}_duration`, matches[4], true);
 
 		if (matches.length === 6) {
-			self.setInstanceState(`cue_${type}_intensity`, matches[5], true);
+			self.setInstanceState(`cue_${type}_intensity`, matches[6], true);
 		}
 
 	} else {
@@ -837,7 +841,7 @@ instance.prototype.actions = function(system) {
 					],
 				},
 				{
-					type: 'textinput',
+					type: 'textwithvariables',
 					label: 'Command',
 					tooltip: 'The command to run.',
 					id: 'cmd',
@@ -852,6 +856,18 @@ instance.prototype.actions = function(system) {
 						{ id:'add', label:'Add to command line' },
 						{ id:'run', label:'Run this command' },
 					],
+				}
+			]
+		},
+
+		'custom_osc': {
+			label: 'Custom Command (OSC)',
+			options: [
+				{
+					type: 'textwithvariables',
+					label: 'OSC Path',
+					id: 'osc_path',
+					default: ''
 				}
 			]
 		},
@@ -872,14 +888,14 @@ instance.prototype.actions = function(system) {
 			label: 'Run Cue',
 			options: [
 				{
-					type: 'textinput',
+					type: 'textwithvariables',
 					label: 'Cue List',
 					id: 'list',
 					default: '1',
 					regex: self.REGEX_NUMBER,
 				},
 				{
-					type: 'textinput',
+					type: 'textwithvariables',
 					label: 'Cue Number',
 					id: 'number',
 					default: '1',
@@ -892,7 +908,7 @@ instance.prototype.actions = function(system) {
 			label: 'Run Macro',
 			options: [
 				{
-					type: 'textinput',
+					type: 'textwithvariables',
 					label: 'Macro',
 					id: 'macro',
 					default: '1',
@@ -905,7 +921,7 @@ instance.prototype.actions = function(system) {
 			label: 'Press Key',
 			options: [
 				{
-					type: 'textinput',
+					type: 'textwithvariables',
 					label: 'Key',
 					id: 'key',
 					default: '',
@@ -918,14 +934,14 @@ instance.prototype.actions = function(system) {
 			label: 'Channel Intensity',
 			options: [
 				{
-					type: 'textinput',
+					type: 'textwithvariables',
 					label: 'Channel',
 					id: 'id',
 					default: '1',
 					regex: self.REGEX_FLOAT_OR_INT,
 				},
 				{
-					type: 'textinput',
+					type: 'textwithvariables',
 					label: 'Value',
 					id: 'value',
 					default: '100',
@@ -939,14 +955,14 @@ instance.prototype.actions = function(system) {
 			label: 'Group Intensity',
 			options: [
 				{
-					type: 'textinput',
+					type: 'textwithvariables',
 					label: 'Group',
 					id: 'id',
 					default: '1',
 					regex: self.REGEX_FLOAT_OR_INT,
 				},
 				{
-					type: 'textinput',
+					type: 'textwithvariables',
 					label: 'Value',
 					id: 'value',
 					default: '100',
@@ -960,14 +976,14 @@ instance.prototype.actions = function(system) {
 			label: 'Submaster Intensity',
 			options: [
 				{
-					type: 'textinput',
+					type: 'textwithvariables',
 					label: 'Submaster',
 					id: 'id',
 					default: '1',
 					regex: self.REGEX_NUMBER
 				},
 				{
-					type: 'textinput',
+					type: 'textwithvariables',
 					label: 'Value',
 					id: 'value',
 					default: '100',
@@ -981,7 +997,7 @@ instance.prototype.actions = function(system) {
 			label: 'Submaster Bump',
 			options: [
 				{
-					type: 'textinput',
+					type: 'textwithvariables',
 					label: 'Submaster',
 					id: 'sub',
 					default: '1',
@@ -1002,6 +1018,19 @@ instance.prototype.actions = function(system) {
 			]
 		},
 
+		'fire_preset': {
+			label: 'Fire Preset',
+			options: [
+				{
+					type: 'textwithvariables',
+					label: 'Preset',
+					id: 'preset',
+					default: '1',
+					regex: self.REGEX_NUMBER
+				}
+			]
+		},
+
 	});
 
 }
@@ -1014,8 +1043,23 @@ instance.prototype.actions = function(system) {
  */
 instance.prototype.action = function(action) {
 	let self = this;
-	let opt = action.options;
 	let arg = [];
+
+	// Clone 'action.options', otherwise reassigning the parsed variables directly will push
+	//  them back into the config, because that's done by reference.
+	let opt = JSON.parse(JSON.stringify(action.options));
+
+	// Loop through each option for this action, and if any appear to be variables, parse them
+	//  and reassign the result back into 'opt'.
+	for (const key in opt) {
+		let v = opt[key];
+		if (typeof v === 'string' && v.includes('$(')) {
+			self.system.emit('variable_parse', v.trim(), parsed => {
+				opt[key] = parsed;
+			});
+		}
+	}
+
 
 	switch (action.action) {
 		case 'run_cue':
@@ -1113,6 +1157,17 @@ instance.prototype.action = function(action) {
 			]);
 			break;
 
+
+		case 'custom_osc':
+			self.sendOsc(opt.osc_path, [], false);
+			break;
+
+
+		case 'fire_preset':
+			self.sendOsc(`preset/${opt.preset}/fire`, []);
+			break;
+	
+
 	}
 
 }
@@ -1123,7 +1178,7 @@ instance.prototype.action = function(action) {
  * 
  * @param path          The OSC path to send
  * @param args          An array of arguments, or empty if no arguments needed
- * @param appendUser    Whether to append the '/eos/user/' prefix to the command.
+ * @param appendUser    Whether to append the '/eos/' prefix to the command.
  */
 instance.prototype.sendOsc = function(path, args, appendPrefix) {
 	let self = this;
@@ -1142,7 +1197,7 @@ instance.prototype.sendOsc = function(path, args, appendPrefix) {
 	};
 
 	if (self.debugToLogger) {
-		self.log('warn', `Eos: Sending packet: ${JSON.stringify(packet)}`)
+		self.log('warn', `Eos: Sending packet: ${JSON.stringify(packet)}`);
 	}
 
 	self.oscSocket.send(packet);

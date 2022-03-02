@@ -41,6 +41,7 @@ While it's not practical to create specific actions for every possible command a
 | Action              | Description                                                  |
 | ------------------- | ------------------------------------------------------------ |
 | Custom Command      | Runs a custom command. See the section below for more information. |
+| Custom Command (OSC) | Sends a custom OSC command to Eos. See the **Supported OSC Input** section in the [Eos Operations Manual](https://www.etcconnect.com/WebDocs/Controls/EosFamilyOnlineHelp/en-us/Default.htm) for a list of commands. The paths should all start with `/eos/`. Use the Generic OSC module for more advanced OSC use. |
 | Key: Blackout       | Toggles the **Blackout** button. |
 | Key: Go             | Runs the next cue in the current list.<br />This is the same as pressing the **Go** button on your console. |
 | Key: Stop/Back      | Press once to stop the current cue (if it's running), and again to move back to the previous cue in the list.<br />This is the same as pressing the **Stop/Back** button on your console. |
@@ -51,6 +52,7 @@ While it's not practical to create specific actions for every possible command a
 | Group Intensity     | Sets a group's intensity to a percentage, or to a keyword: `out`, `full`, `min`, `max`. |
 | Submaster Intensity | Sets a submaster's intensity to a percentage, or to a keyword: `out`, `full`, `min`, `max`. |
 | Submaster Bump      | Simulates a submaster's bump button. The **State** property can be:<br />  - Press and Release<br />  - Press and Hold<br />  - Release<br /><br />*Hint: Add this action to a down/on action to **Press and Hold**, and a **Release** action to up/off, then make the button **Latch/Toggle**.* |
+| Fire Preset         | Runs the preset given its number. |
 
 
 ## Dynamic variables
