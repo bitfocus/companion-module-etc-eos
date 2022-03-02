@@ -776,12 +776,9 @@ instance.prototype.parseCueName = function(type, cueName) {
 	//  <CUE NUMBER> <DURATION> [<INTENSITY PERCENTAGE>]
 	let matches = cueName.match(/^(?<CUE_NUMBER>[\d\.]+)( (?<LABEL>.*?))? (?<DURATION>[\d\.]+)( (?<INTENSITY>[\d\.]+%))?$/);
 
-	self.log('warn', JSON.stringify(matches));
-	self.log('warn', JSON.stringify(matches.group));
-
 	if (matches !== null && matches.length >= 6) {
 		// Parse the response.
-		self.setInstanceState(`cue_${type}_label`, matches[2] || matches[1], true);
+		self.setInstanceState(`cue_${type}_label`, matches[2] || matches[1], true);   // Use cue number if label not available.
 		self.setInstanceState(`cue_${type}_duration`, matches[4], true);
 
 		if (matches.length === 6) {
