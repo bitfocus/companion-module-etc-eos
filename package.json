@@ -15,7 +15,7 @@
 	"author": "Steve Therrien <git@stevetherrien.ca>",
 	"license": "MIT",
 	"dependencies": {
-		"osc": "^2.4.0"
+		"osc": "github:julusian/osc.js#companion-etc-eos"
 	},
 	"homepage": "https://github.com/bitfocus/companion-module-etc-eos#readme",
 	"bugs": {
