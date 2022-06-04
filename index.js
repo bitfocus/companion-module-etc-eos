@@ -576,7 +576,7 @@ instance.prototype.getOsc10Socket = function (address, port) {
 
 		} else {
 			// Pass the data to the real osc.readPacket function.
-			return [ OSC10.originalPacketRedirected(data, options, offsetState, len) ];
+			return [ OSC10.originalReadPacket(data, options, offsetState, len) ];
 		}
 
 	};
