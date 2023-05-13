@@ -290,9 +290,9 @@ class ModuleInstance extends InstanceBase {
 				if ( wheel_num >= 1 ) {
 					let wheel_label = message.args[0].value
 					let wheel_stringval = ''
-					let wheel_cat = message.args[1].value
-					let wheel_floatval = message.args[2].value + 0
-					wheel_floatval = wheel_floatval.toFixed(2);
+					let wheel_cat = message.args[1].value || ''
+					let wheel_floatval = message.args[2].value + 0 || '0'
+					wheel_floatval = wheel_floatval.toFixed(2)
 
 					let wmatches
 					wmatches = wheel_label.match( /^([^\[]*)\s*\[([^\]]*)\]/ )
@@ -424,6 +424,7 @@ class ModuleInstance extends InstanceBase {
 
 	}
 	
+
 	/*
 	 *
 	 * For actions
@@ -432,10 +433,12 @@ class ModuleInstance extends InstanceBase {
 	// From v2 module, slightly modified to use parseVariablesInString
 	parseOptions( options ) {
 		let self = this
-	
+		
+		let opt = ''
+
 		// Clone 'action.options', otherwise reassigning the parsed variables directly will push
 		//  them back into the config, because that's done by reference.
-		let opt = JSON.parse(JSON.stringify(action.options))
+		opt = JSON.parse(JSON.stringify(options))
 
 		// Loop through each option for this action, and if any appear to be variables, parse them
 		//  and reassign the result back into 'opt'.
@@ -467,14 +470,7 @@ class ModuleInstance extends InstanceBase {
 		}
 
 		self.sendOsc(`${prefix}/${opt.id}${suffix}`, arg)
-	}
-	
-	/*
-	 *
-	 * For Feedbacks
-	 *
-	 */
-		
+	}		
 }
 
 runEntrypoint(ModuleInstance, UpgradeScripts)

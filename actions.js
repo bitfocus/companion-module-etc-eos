@@ -16,10 +16,11 @@ module.exports = function (self) {
 				},
 			],
 			callback: async (event) => {
-				let opt = this.parseOptions( event.options )
-				let before = opt.before === 'clear' ? 'newcmd' : 'cmd'
-				let cmd    = opt.cmd || ''
-				let after  = opt.after === 'add' ? '' : '#'
+				let opt = '', before = '', cmd = '', after = ''
+				opt = self.parseOptions( event.options )
+				before = opt.before === 'clear' ? 'newcmd' : 'cmd'
+				cmd    = opt.cmd || ''
+				after  = opt.after === 'add' ? '' : '#'
 
 				self.sendOsc(`${before}`, [
 					{ type: 's', value: `${cmd}${after}`}
@@ -31,13 +32,14 @@ module.exports = function (self) {
 			options: [
 				{
 					id: 'osc_path',
-					type: 'textwithvariables',
+					type: 'textinput',
 					name: 'OSC path',
 					default: '',
 				},
 			],
 			callback: async (event) => {
-				let opt = this.parseOptions( event.options )
+				let opt = ''
+				opt = self.parseOptions( event.options )
 				self.sendOsc(opt.osc_path, [], false)
 			},
 		},
@@ -45,7 +47,8 @@ module.exports = function (self) {
 			name: 'Key: Blackout',
 			options: [],
 			callback: async (event) => {
-				let opt = this.parseOptions( event.options )
+				let opt = ''
+				opt = self.parseOptions( event.options )
 				self.sendOsc('key/blackout', [ ])
 			},
 		},
@@ -53,7 +56,8 @@ module.exports = function (self) {
 			name: 'Key: Go',
 			options: [],
 			callback: async (event) => {
-				let opt = this.parseOptions( event.options )
+				let opt = ''
+				opt = self.parseOptions( event.options )
 				self.sendOsc(`key/go_0`, [ { type: 'f', value: 1.0 } ])
 			},
 		},
@@ -61,7 +65,8 @@ module.exports = function (self) {
 			name: 'Key: Stop/Back',
 			options: [],
 			callback: async (event) => {
-				let opt = this.parseOptions( event.options )
+				let opt = ''
+				opt = self.parseOptions( event.options )
 				self.sendOsc(`key/stop`, [ { type: 'f', value: 1.0 } ])
 			},
 		},
@@ -70,21 +75,22 @@ module.exports = function (self) {
 			options: [
 				{
 					id: 'list',
-					type: 'textwithvariables',
+					type: 'textinput',
 					name: 'Cue List',
 					default: '1',
-					regex: this.REGEX_FLOAT_OR_INT,
+					regex: self.REGEX_FLOAT_OR_INT,
 				},
 				{
 					id: 'number',
-					type: 'textwithvariables',
+					type: 'textinput',
 					name: 'Cue Number',
 					default: '1',
-					regex: this.REGEX_FLOAT_OR_INT,
+					regex: self.REGEX_FLOAT_OR_INT,
 				},
 			],
 			callback: async (event) => {
-				let opt = this.parseOptions( event.options )
+				let opt = ''
+				opt = self.parseOptions( event.options )
 				self.sendOsc(`cue/${options.list}/${options.number}/fire`, [])
 			},
 		},
@@ -93,14 +99,15 @@ module.exports = function (self) {
 			options: [
 				{
 					id: 'macro',
-					type: 'textwithvariables',
+					type: 'textinput',
 					name: 'Macro',
 					default: '1',
-					regex: this.REGEX_FLOAT_OR_INT,
+					regex: self.REGEX_FLOAT_OR_INT,
 				},
 			],
 			callback: async (event) => {
-				let opt = this.parseOptions( event.options )
+				let opt = ''
+				opt = self.parseOptions( event.options )
 				self.sendOsc('macro/fire', [ { type: 'i', value: opt.macro } ])
 			},
 		},
@@ -109,14 +116,15 @@ module.exports = function (self) {
 			options: [
 				{
 					id: 'key',
-					type: 'textwithvariables',
+					type: 'textinput',
 					name: 'Key',
 					tooltip: "See the module's help for information",
 					default: '1',
 				},
 			],
 			callback: async (event) => {
-				let opt = this.parseOptions( event.options )
+				let opt = ''
+				opt = self.parseOptions( event.options )
 				self.sendOsc('key/' + opt.key, [ ])
 			},
 		},
@@ -125,14 +133,14 @@ module.exports = function (self) {
 			options: [
 				{
 					id: 'id',
-					type: 'textwithvariables',
+					type: 'textinput',
 					name: 'Channel',
 					default: '1',
-					regex: this.REGEX_FLOAT_OR_INT,
+					regex: self.REGEX_FLOAT_OR_INT,
 				},
 				{
 					id: 'value',
-					type: 'textwithvariables',
+					type: 'textinput',
 					name: 'Value',
 					tooltip: "A percentage from 0 to 100, or 'out', 'full', 'min', 'max'.",
 					default: '100',
@@ -140,7 +148,8 @@ module.exports = function (self) {
 				},
 			],
 			callback: async (event) => {
-				let opt = this.parseOptions( event.options )
+				let opt = ''
+				opt = self.parseOptions( event.options )
 				setIntensity( 'chan', opt )
 			},
 		},
@@ -149,14 +158,14 @@ module.exports = function (self) {
 			options: [
 				{
 					id: 'id',
-					type: 'textwithvariables',
+					type: 'textinput',
 					name: 'Group',
 					default: '1',
-					regex: this.REGEX_FLOAT_OR_INT,
+					regex: self.REGEX_FLOAT_OR_INT,
 				},
 				{
 					id: 'value',
-					type: 'textwithvariables',
+					type: 'textinput',
 					name: 'Value',
 					tooltip: "A percentage from 0 to 100, or 'out', 'full', 'min', 'max'.",
 					default: '100',
@@ -164,7 +173,8 @@ module.exports = function (self) {
 				},
 			],
 			callback: async (event) => {
-				let opt = this.parseOptions( event.options )
+				let opt = ''
+				opt = self.parseOptions( event.options )
 				setIntensity( 'group', opt )
 			},
 		},
@@ -173,14 +183,14 @@ module.exports = function (self) {
 			options: [
 				{
 					id: 'id',
-					type: 'textwithvariables',
+					type: 'textinput',
 					name: 'Submaster',
 					default: '1',
-					regex: this.REGEX_FLOAT_OR_INT,
+					regex: self.REGEX_FLOAT_OR_INT,
 				},
 				{
 					id: 'value',
-					type: 'textwithvariables',
+					type: 'textinput',
 					name: 'Value',
 					tooltip: "A percentage from 0 to 100, or 'out', 'full', 'min', 'max'.",
 					default: '100',
@@ -188,7 +198,8 @@ module.exports = function (self) {
 				},
 			],
 			callback: async (event) => {
-				let opt = this.parseOptions( event.options )
+				let opt = ''
+				opt = self.parseOptions( event.options )
 				setIntensity( 'sub', opt )
 			},
 		},
@@ -197,10 +208,10 @@ module.exports = function (self) {
 			options: [
 				{
 					id: 'sub',
-					type: 'textwithvariables',
+					type: 'textinput',
 					name: 'Submaster',
 					default: '1',
-					regex: this.REGEX_NUMBER,
+					regex: self.REGEX_NUMBER,
 				},
 				{
 					id: 'button',
@@ -216,7 +227,8 @@ module.exports = function (self) {
 				},
 			],
 			callback: async (event) => {
-				let opt = this.parseOptions( event.options )
+				let opt = ''
+				opt = self.parseOptions( event.options )
 				switch (opt.button) {
 					// case 'press': no arg needed
 					case 'hold':
@@ -234,14 +246,15 @@ module.exports = function (self) {
 			options: [
 				{
 					id: 'preset',
-					type: 'textwithvariables',
+					type: 'textinput',
 					name: 'Preset',
 					default: '1',
-					regex: this.REGEX_NUMBER
+					regex: self.REGEX_NUMBER
 				},
 			],
 			callback: async (event) => {
-				let opt = this.parseOptions( event.options )
+				let opt = ''
+				opt = self.parseOptions( event.options )
 				self.sendOsc(`preset/${opt.preset}/fire`, [])
 			},
 		},
