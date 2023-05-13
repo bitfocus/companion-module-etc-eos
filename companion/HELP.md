@@ -94,6 +94,63 @@ A list of the available variables is listed on the module's config page, and is 
 _Soft keys 7-12 are the alternates available when you toggle the {More SK} button._
 
 
+## Wheels - More variables
+
+There are also a set of variables to track the status of the encoder wheels.
+Each wheel has the following variables:
+
+| $(etc-eos:wheel_label_X)        | Wheel X's label                     |Function        |
+| $(etc-eos:wheel_stringval_X)    | Wheel X's string value              |String Format   |
+| $(etc-eos:wheel_cat_X)          | Wheel X's function category         |Category        |
+| $(etc-eos:wheel_floatval_X)     | Wheel X's float numeric value       |2 decimals      |
+
+Based on initial testing, the wheels are numbered like so:
+
+| $(etc-eos:wheel_label_1)        | Wheel 1's label     |  Intens
+| $(etc-eos:wheel_label_2)        | Wheel 2's label     |  Intensity Macros
+| $(etc-eos:wheel_label_3)        | Wheel 3's label     |  Intensity Macro Rate
+| $(etc-eos:wheel_label_4)        | Wheel 4's label     |  Intensity Macro Crossfade Rate
+| $(etc-eos:wheel_label_5)        | Wheel 5's label     |  Pan
+| $(etc-eos:wheel_label_6)        | Wheel 6's label     |  Tilt
+| $(etc-eos:wheel_label_7)        | Wheel 7's label     |  X Focus
+| $(etc-eos:wheel_label_8)        | Wheel 8's label     |  Y Focus
+| $(etc-eos:wheel_label_9)        | Wheel 9's label     |  Z Focus
+| $(etc-eos:wheel_label_10)       | Wheel 10's label    |  Cyan
+| $(etc-eos:wheel_label_11)       | Wheel 11's label    |  Magenta
+| $(etc-eos:wheel_label_12)       | Wheel 12's label    |  Yellow
+| $(etc-eos:wheel_label_13)       | Wheel 13's label    |  Color Select
+| $(etc-eos:wheel_label_14)       | Wheel 14's label    |  Hue
+| $(etc-eos:wheel_label_15)       | Wheel 15's label    |  Saturatn
+| $(etc-eos:wheel_label_16)       | Wheel 16's label    |  CTO
+| $(etc-eos:wheel_label_17)       | Wheel 17's label    |  Color Mix Mode
+| $(etc-eos:wheel_label_18)       | Wheel 18's label    |  Gobo Ind/Spd
+| $(etc-eos:wheel_label_19)       | Wheel 19's label    |  Gobo Select
+| $(etc-eos:wheel_label_20)       | Wheel 20's label    |  Beam Fx Ind/Spd
+| $(etc-eos:wheel_label_21)       | Wheel 21's label    |  Beam Fx Select
+| $(etc-eos:wheel_label_22)       | Wheel 22's label    |  Animation Select
+| $(etc-eos:wheel_label_23)       | Wheel 23's label    |  Effect Macros
+| $(etc-eos:wheel_label_24)       | Wheel 24's label    |  Iris
+| $(etc-eos:wheel_label_25)       | Wheel 25's label    |  Edge
+| $(etc-eos:wheel_label_26)       | Wheel 26's label    |  Zoom
+| $(etc-eos:wheel_label_27)       | Wheel 27's label    |  Shutter Strobe
+| $(etc-eos:wheel_label_28)       | Wheel 28's label    |  Diffusion
+| $(etc-eos:wheel_label_29)       | Wheel 29's label    |  Global MSpeed
+| $(etc-eos:wheel_label_30)       | Wheel 30's label    |  Edge Mode
+| $(etc-eos:wheel_label_31)       | Wheel 31's label    |  Angle C
+| $(etc-eos:wheel_label_32)       | Wheel 32's label    |  Thrust C
+| $(etc-eos:wheel_label_33)       | Wheel 33's label    |  Angle A
+| $(etc-eos:wheel_label_34)       | Wheel 34's label    |  Thrust A
+| $(etc-eos:wheel_label_35)       | Wheel 35's label    |  Angle D
+| $(etc-eos:wheel_label_36)       | Wheel 36's label    |  Thrust D
+| $(etc-eos:wheel_label_37)       | Wheel 37's label    |  Angle B
+| $(etc-eos:wheel_label_38)       | Wheel 38's label    |  Thrust B
+| $(etc-eos:wheel_label_39)       | Wheel 39's label    |  Frame Assembly
+| $(etc-eos:wheel_label_40)       | Wheel 40's label    |  {unused?}
+
+In testing, I only saw 39 reported, but if more exist the count will have to
+be adjusted.
+
+
 ## Feedbacks
 
 Feedbacks let a button's style change when something happens. There are three feedbacks available:
