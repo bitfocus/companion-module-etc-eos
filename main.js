@@ -54,7 +54,7 @@ class ModuleInstance extends InstanceBase {
 
 		if (currentHost !== this.config.host || currentUserId !== this.config.userid) {
 			this.closeOscSocket()
-			await thig.init()
+			await this.init()
 		}
 	}
 
