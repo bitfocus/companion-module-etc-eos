@@ -22,23 +22,23 @@ module.exports = async function (self) {
 	// anything, but the downside is that you have to figure out what wheel number
 	// you need. :( I couldn't find a list of how many there were, lets go for 40.
 	// In testing I didn't find one higher than that, but it may need to be adjusted.
-	for (let i=1; i<=40; i++) {
-		variableDefinitions.push({ variableId: `wheel_label_${i}`, name: `Wheel ${i}'s label` } )
-		variableDefinitions.push({ variableId: `wheel_stringval_${i}`, name: `Wheel ${i}'s string value` } )
-		variableDefinitions.push({ variableId: `wheel_cat_${i}`, name: `Wheel ${i}'s category` } )
-		variableDefinitions.push({ variableId: `wheel_floatval_${i}`, name: `Wheel ${i}'s float value` } )
+	for (let i = 1; i <= 40; i++) {
+		variableDefinitions.push({ variableId: `wheel_label_${i}`, name: `Wheel ${i}'s label` })
+		variableDefinitions.push({ variableId: `wheel_stringval_${i}`, name: `Wheel ${i}'s string value` })
+		variableDefinitions.push({ variableId: `wheel_cat_${i}`, name: `Wheel ${i}'s category` })
+		variableDefinitions.push({ variableId: `wheel_floatval_${i}`, name: `Wheel ${i}'s float value` })
 	}
 
 	// There are 6 soft keys, and 6 alternates (exposed with {More SK}).
-	for (let i=1; i<=12; i++) {
+	for (let i = 1; i <= 12; i++) {
 		variableDefinitions.push({ variableId: `softkey_label_${i}`, name: `Soft key ${i}'s label` })
 	}
 
 	self.setVariableDefinitions(variableDefinitions)
-	
+
 	// Initialize the default values for the variables
-	for (let i=0; i < variableDefinitions.length; i++) {
-		self.setVariableValues( { [variableDefinitions[i].variableId]: '' } )
+	for (let i = 0; i < variableDefinitions.length; i++) {
+		self.setVariableValues({ [variableDefinitions[i].variableId]: '' })
 	}
 }
 

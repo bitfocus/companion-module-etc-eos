@@ -7,8 +7,8 @@ module.exports = async function (self) {
 			name: 'When cue is pending',
 			description: "Changes the button's style when this cue is pending.",
 			defaultStyle: {
-				bgcolor: combineRgb(204,102,0),
-				color: combineRgb(255,255,255),
+				bgcolor: combineRgb(204, 102, 0),
+				color: combineRgb(255, 255, 255),
 			},
 			options: [
 				{
@@ -27,8 +27,10 @@ module.exports = async function (self) {
 				},
 			],
 			callback: (feedback) => {
-				return (feedback.options.list === self.instanceState['cue_pending_list'] &&
-						feedback.options.number === self.instanceState['cue_pending_num']) 
+				return (
+					feedback.options.list === self.instanceState['cue_pending_list'] &&
+					feedback.options.number === self.instanceState['cue_pending_num']
+				)
 			},
 		},
 		active_cue: {
@@ -36,8 +38,8 @@ module.exports = async function (self) {
 			name: 'When cue is active',
 			description: "Changes the button's style when this cue is active.",
 			defaultStyle: {
-				bgcolor: combineRgb(51,102,0),
-				color: combineRgb(255,255,255),
+				bgcolor: combineRgb(51, 102, 0),
+				color: combineRgb(255, 255, 255),
 			},
 			options: [
 				{
@@ -56,8 +58,10 @@ module.exports = async function (self) {
 				},
 			],
 			callback: (feedback) => {
-				return (feedback.options.list === self.instanceState['cue_active_list'] &&
-						feedback.options.number === self.instanceState['cue_active_num']) 
+				return (
+					feedback.options.list === self.instanceState['cue_active_list'] &&
+					feedback.options.number === self.instanceState['cue_active_num']
+				)
 			},
 		},
 		connected: {
@@ -65,8 +69,8 @@ module.exports = async function (self) {
 			name: 'When connection to console changes',
 			description: 'Changes colors when the connection state to the console changes.',
 			defaultStyle: {
-				bgcolor: combineRgb(51,102,0),
-				color: combineRgb(255,255,255),
+				bgcolor: combineRgb(51, 102, 0),
+				color: combineRgb(255, 255, 255),
 			},
 			options: [
 				{
@@ -77,7 +81,7 @@ module.exports = async function (self) {
 				},
 			],
 			callback: (feedback) => {
-				return (feedback.options.connected === self.instanceState['connected'])
+				return feedback.options.connected === self.instanceState['connected']
 			},
 		},
 	})

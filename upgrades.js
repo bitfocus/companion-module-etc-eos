@@ -1,4 +1,4 @@
-const {CreateConvertToBooleanFeedbackUpgradeScript} = require('@companion-module/base')
+const { CreateConvertToBooleanFeedbackUpgradeScript } = require('@companion-module/base')
 
 module.exports = [
 	CreateConvertToBooleanFeedbackUpgradeScript({

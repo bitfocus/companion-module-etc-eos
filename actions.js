@@ -1,6 +1,5 @@
 const { Regex } = require('@companion-module/base')
 
-
 module.exports = function (self) {
 	self.setActionDefinitions({
 		custom_cmd: {
@@ -31,21 +30,22 @@ module.exports = function (self) {
 					default: 'run',
 					tooltip: 'Add the command to the command line or run it.',
 					choices: [
-						{ id:'add', label:'Add to command line' },
-						{ id:'run', label:'Run this command' },
+						{ id: 'add', label: 'Add to command line' },
+						{ id: 'run', label: 'Run this command' },
 					],
-				}
+				},
 			],
 			callback: async (event) => {
-				let opt = '', before = '', cmd = '', after = ''
-				opt = self.parseOptions( event.options )
+				let opt = '',
+					before = '',
+					cmd = '',
+					after = ''
+				opt = self.parseOptions(event.options)
 				before = opt.before === 'clear' ? 'newcmd' : 'cmd'
-				cmd    = opt.cmd || ''
-				after  = opt.after === 'add' ? '' : '#'
+				cmd = opt.cmd || ''
+				after = opt.after === 'add' ? '' : '#'
 
-				self.sendOsc(`${before}`, [
-					{ type: 's', value: `${cmd}${after}`}
-				])
+				self.sendOsc(`${before}`, [{ type: 's', value: `${cmd}${after}` }])
 			},
 		},
 		custom_osc: {
@@ -61,7 +61,7 @@ module.exports = function (self) {
 			],
 			callback: async (event) => {
 				let opt = ''
-				opt = self.parseOptions( event.options )
+				opt = self.parseOptions(event.options)
 				self.sendOsc(opt.osc_path, [], false)
 			},
 		},
@@ -70,8 +70,8 @@ module.exports = function (self) {
 			options: [],
 			callback: async (event) => {
 				let opt = ''
-				opt = self.parseOptions( event.options )
-				self.sendOsc('key/blackout', [ ])
+				opt = self.parseOptions(event.options)
+				self.sendOsc('key/blackout', [])
 			},
 		},
 		next_cue: {
@@ -79,8 +79,8 @@ module.exports = function (self) {
 			options: [],
 			callback: async (event) => {
 				let opt = ''
-				opt = self.parseOptions( event.options )
-				self.sendOsc(`key/go_0`, [ { type: 'f', value: 1.0 } ])
+				opt = self.parseOptions(event.options)
+				self.sendOsc(`key/go_0`, [{ type: 'f', value: 1.0 }])
 			},
 		},
 		stop_back: {
@@ -88,8 +88,8 @@ module.exports = function (self) {
 			options: [],
 			callback: async (event) => {
 				let opt = ''
-				opt = self.parseOptions( event.options )
-				self.sendOsc(`key/stop`, [ { type: 'f', value: 1.0 } ])
+				opt = self.parseOptions(event.options)
+				self.sendOsc(`key/stop`, [{ type: 'f', value: 1.0 }])
 			},
 		},
 		run_cue: {
@@ -114,7 +114,7 @@ module.exports = function (self) {
 			],
 			callback: async (event) => {
 				let opt = ''
-				opt = self.parseOptions( event.options )
+				opt = self.parseOptions(event.options)
 				self.sendOsc(`cue/${options.list}/${options.number}/fire`, [])
 			},
 		},
@@ -132,8 +132,8 @@ module.exports = function (self) {
 			],
 			callback: async (event) => {
 				let opt = ''
-				opt = self.parseOptions( event.options )
-				self.sendOsc('macro/fire', [ { type: 'i', value: opt.macro } ])
+				opt = self.parseOptions(event.options)
+				self.sendOsc('macro/fire', [{ type: 'i', value: opt.macro }])
 			},
 		},
 		press_key: {
@@ -150,8 +150,8 @@ module.exports = function (self) {
 			],
 			callback: async (event) => {
 				let opt = ''
-				opt = self.parseOptions( event.options )
-				self.sendOsc('key/' + opt.key, [ ])
+				opt = self.parseOptions(event.options)
+				self.sendOsc('key/' + opt.key, [])
 			},
 		},
 		channel_intensity: {
@@ -177,8 +177,8 @@ module.exports = function (self) {
 			],
 			callback: async (event) => {
 				let opt = ''
-				opt = self.parseOptions( event.options )
-				setIntensity( 'chan', opt )
+				opt = self.parseOptions(event.options)
+				setIntensity('chan', opt)
 			},
 		},
 		group_intensity: {
@@ -204,8 +204,8 @@ module.exports = function (self) {
 			],
 			callback: async (event) => {
 				let opt = ''
-				opt = self.parseOptions( event.options )
-				setIntensity( 'group', opt )
+				opt = self.parseOptions(event.options)
+				setIntensity('group', opt)
 			},
 		},
 		sub_intensity: {
@@ -231,8 +231,8 @@ module.exports = function (self) {
 			],
 			callback: async (event) => {
 				let opt = ''
-				opt = self.parseOptions( event.options )
-				setIntensity( 'sub', opt )
+				opt = self.parseOptions(event.options)
+				setIntensity('sub', opt)
 			},
 		},
 		sub_bump: {
@@ -261,12 +261,12 @@ module.exports = function (self) {
 			],
 			callback: async (event) => {
 				let opt = ''
-				opt = self.parseOptions( event.options )
+				opt = self.parseOptions(event.options)
 				switch (opt.button) {
 					// case 'press': no arg needed
 					case 'hold':
 						arg = { type: 'f', value: 1.0 }
-						break;				
+						break
 					case 'release':
 						arg = { type: 'f', value: 0.0 }
 						break
@@ -288,7 +288,7 @@ module.exports = function (self) {
 			],
 			callback: async (event) => {
 				let opt = ''
-				opt = self.parseOptions( event.options )
+				opt = self.parseOptions(event.options)
 				self.sendOsc(`preset/${opt.preset}/fire`, [])
 			},
 		},
