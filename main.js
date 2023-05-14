@@ -15,12 +15,12 @@ class ModuleInstance extends InstanceBase {
 	async init(config) {
 		this.config = config
 
-		// this.updateStatus(InstanceStatus.Ok)		
+		// this.updateStatus(InstanceStatus.Ok)
 		this.updateStatus(InstanceStatus.UnknownWarning)
-		
+
 		this.instanceState = {}
 		this.debugToLogger = true
-		
+
 		this.EOS_OSC_PORT = 3032
 
 		this.updateActions() // export actions
@@ -28,11 +28,11 @@ class ModuleInstance extends InstanceBase {
 		this.updateVariableDefinitions() // export variable definitions
 		this.updatePresets() // export presets
 
-		this.oscSocket = this.getOsc10Socket(this.config.host, this.EOS_OSC_PORT )
+		this.oscSocket = this.getOsc10Socket(this.config.host, this.EOS_OSC_PORT)
 		this.setOscSocketListeners()
 		this.startReconnectTimer()
 	}
-	
+
 	// When module gets deleted
 	async destroy() {
 		// Clear the reconnect timer if it exists.
@@ -52,10 +52,9 @@ class ModuleInstance extends InstanceBase {
 
 		this.config = config
 
-		if ( currentHost !== this.config.host
-			|| currentUserId !== this.config.userid ) {
-				this.closeOscSocket()
-				await thig.init()
+		if (currentHost !== this.config.host || currentUserId !== this.config.userid) {
+			this.closeOscSocket()
+			await thig.init()
 		}
 	}
 
@@ -91,17 +90,17 @@ class ModuleInstance extends InstanceBase {
 	updateVariableDefinitions() {
 		UpdateVariableDefinitions(this)
 	}
-	
+
 	updatePresets() {
 		UpdatePresetDefinitions(this)
 	}
-	
+
 	/**
 	 * Sets the connection state of this module to the Eos console.
-	 * 
+	 *
 	 * @param isConnected
 	 */
-	setConnectionState( isConnected ) {
+	setConnectionState(isConnected) {
 		let currentState = this.instanceState['connected']
 
 		this.updateStatus(isConnected ? InstanceStatus.Ok : InstanceStatus.UnknownError)
@@ -111,9 +110,7 @@ class ModuleInstance extends InstanceBase {
 			// The connection state changed. Update the feedback.
 			this.checkFeedbacks('connected')
 		}
-
 	}
-
 
 	/**
 	 * Closes the OSC socket.
@@ -133,7 +130,6 @@ class ModuleInstance extends InstanceBase {
 		this.emptyState()
 	}
 
-
 	/**
 	 * Watches for disconnects and reconnects to the console.
 	 */
@@ -144,23 +140,23 @@ class ModuleInstance extends InstanceBase {
 		}
 
 		this.reconnectTimer = setInterval(() => {
-
-			if (this.oscSocket !== undefined && this.oscSocket.socket !== undefined && this.oscSocket.socket.readyState === 'open') {
+			if (
+				this.oscSocket !== undefined &&
+				this.oscSocket.socket !== undefined &&
+				this.oscSocket.socket.readyState === 'open'
+			) {
 				// Already connected. Nothing to do.
 				return
 			}
 
 			// Re-open the TCP socket
 			this.oscSocket.socket.connect(this.EOS_OSC_PORT, this.config.host)
-	
 		}, 5000)
-
 	}
-
 
 	/**
 	 * Updates the internal state of a variable within this module.
-	 * 
+	 *
 	 * Optionally updates the dynamic variable with its new value.
 	 */
 	setInstanceState(variable, value, isVariable) {
@@ -169,9 +165,7 @@ class ModuleInstance extends InstanceBase {
 		if (isVariable) {
 			this.setVariableValues({ [variable]: value })
 		}
-
 	}
-
 
 	/**
 	 * Returns the monkey-patched OSC connection to the console.
@@ -180,21 +174,19 @@ class ModuleInstance extends InstanceBase {
 		let OSC10 = require('osc')
 
 		let oscTcp = new OSC10.TCPSocketPort({
-			address  : address,
-			port     : port,
-			useSLIP  : false,
-			metadata : true,
+			address: address,
+			port: port,
+			useSLIP: false,
+			metadata: true,
 		})
 
 		// Return the OSC 1.0 TCP connection.
 		return oscTcp
-
 	}
-
 
 	/**
 	 * Sets the listeners on the self.oscSocket object.
-	 * 
+	 *
 	 * Only needs to be done once, even if the socket reconnects.
 	 */
 	setOscSocketListeners() {
@@ -208,22 +200,21 @@ class ModuleInstance extends InstanceBase {
 			}
 		})
 
-		const cueActive      = /^\/eos\/out\/active\/cue\/([\d\.]+)\/([\d\.]+)$/
-		const cueActiveText  = '/eos/out/active/cue/text'
-		const cuePending     = /^\/eos\/out\/pending\/cue\/([\d\.]+)\/([\d\.]+)$/
+		const cueActive = /^\/eos\/out\/active\/cue\/([\d\.]+)\/([\d\.]+)$/
+		const cueActiveText = '/eos/out/active/cue/text'
+		const cuePending = /^\/eos\/out\/pending\/cue\/([\d\.]+)\/([\d\.]+)$/
 		const cuePendingText = '/eos/out/pending/cue/text'
-		const showName       = '/eos/out/show/name'
-		const showLoaded     = '/eos/out/event/show/loaded'
-		const showCleared    = '/eos/out/event/show/cleared'
-		const softkey        = /^\/eos\/out\/softkey\/(\d+)$/
-		const cmd            = /^\/eos\/out\/user\/(\d+)\/cmd$/
+		const showName = '/eos/out/show/name'
+		const showLoaded = '/eos/out/event/show/loaded'
+		const showCleared = '/eos/out/event/show/cleared'
+		const softkey = /^\/eos\/out\/softkey\/(\d+)$/
+		const cmd = /^\/eos\/out\/user\/(\d+)\/cmd$/
 
 		// This is the raw OSC message, but we are getting something parsed already...
 		// const enc_wheel      = /^\/eos\/out\/active\/wheel\/(\d+),\s*(\w+)\s*\[(\w+)\]\(s\).\s+(\d+)\(i\),\s*([\d.]*)\(f\)$/
-		const enc_wheel      = /^\/eos\/out\/active\/wheel\/(\d+)/
-		
-		self.oscSocket.on('message', function (message) {
+		const enc_wheel = /^\/eos\/out\/active\/wheel\/(\d+)/
 
+		self.oscSocket.on('message', function (message) {
 			if (self.debugToLogger) {
 				self.log('debug', `Eos OSC message args: ${JSON.stringify(message.args)}`)
 				self.log('debug', `Eos OSC message: ${message.address}`)
@@ -231,7 +222,7 @@ class ModuleInstance extends InstanceBase {
 
 			let matches
 
-			if (matches = message.address.match(cueActive)) {
+			if ((matches = message.address.match(cueActive))) {
 				self.setInstanceState('cue_active_list', matches[1], true)
 				self.setInstanceState('cue_active_num', matches[2], true)
 				self.checkFeedbacks('active_cue')
@@ -241,7 +232,7 @@ class ModuleInstance extends InstanceBase {
 				self.parseCueName('active', message.args[0].value)
 			}
 
-			if (matches = message.address.match(cuePending)) {
+			if ((matches = message.address.match(cuePending))) {
 				self.setInstanceState('cue_pending_list', matches[1], true)
 				self.setInstanceState('cue_pending_num', matches[2], true)
 				self.checkFeedbacks('pending_cue')
@@ -264,18 +255,18 @@ class ModuleInstance extends InstanceBase {
 				self.setInstanceState(`softkey_label_${matches[1]}`, message.args[0].value, true)
 			}
 
-			if (matches = message.address.match(cmd)) {
+			if ((matches = message.address.match(cmd))) {
 				let user_id = matches[1]
 				if (user_id === self.config.user_id || self.config.user_id === '-1') {
 					self.setInstanceState('cmd', message.args[0].value, true)
 				}
 			}
 
-			// set variables/state for wheel values		
-			if (matches = message.address.match(enc_wheel)) {
+			// set variables/state for wheel values
+			if ((matches = message.address.match(enc_wheel))) {
 				let wheel_num = matches[1]
-				
-				if ( wheel_num >= 1 ) {
+
+				if (wheel_num >= 1) {
 					let wheel_label = message.args[0].value
 					let wheel_stringval = ''
 					let wheel_cat = message.args[1].value || ''
@@ -283,34 +274,32 @@ class ModuleInstance extends InstanceBase {
 					wheel_floatval = wheel_floatval.toFixed(2)
 
 					let wmatches
-					wmatches = wheel_label.match( /^([^\[]*)\s*\[([^\]]*)\]/ )
-					if ( wmatches != null && wmatches.length == 3 ) {
+					wmatches = wheel_label.match(/^([^\[]*)\s*\[([^\]]*)\]/)
+					if (wmatches != null && wmatches.length == 3) {
 						wheel_label = wmatches[1].trimEnd()
 						wheel_stringval = wmatches[2]
 					}
-					self.setInstanceState(`wheel_label_${wheel_num}`, wheel_label, true )
-					self.setInstanceState(`wheel_stringval_${wheel_num}`, wheel_stringval, true )
-					self.setInstanceState(`wheel_cat_${wheel_num}`, wheel_cat, true )
-					self.setInstanceState(`wheel_floatval_${wheel_num}`, wheel_floatval, true )
+					self.setInstanceState(`wheel_label_${wheel_num}`, wheel_label, true)
+					self.setInstanceState(`wheel_stringval_${wheel_num}`, wheel_stringval, true)
+					self.setInstanceState(`wheel_cat_${wheel_num}`, wheel_cat, true)
+					self.setInstanceState(`wheel_floatval_${wheel_num}`, wheel_floatval, true)
 				}
 			}
 		})
 
 		self.oscSocket.open()
 
-		self.oscSocket.socket.on('close', function(error) {
+		self.oscSocket.socket.on('close', function (error) {
 			self.setConnectionState(false)
 		})
 
-		self.oscSocket.socket.on('connect', function() {
+		self.oscSocket.socket.on('connect', function () {
 			self.setConnectionState(true)
 			self.requestFullState()
 		})
 
 		// self.oscSocket.socket.on('ready', function() { })
-
 	}
-
 
 	/**
 	 * Empties the state (variables/feedbacks) and requests the current state from the console.
@@ -323,9 +312,7 @@ class ModuleInstance extends InstanceBase {
 
 		// Switch to the correct user_id.
 		this.sendOsc(`/eos/user=${this.config.user_id}`, [], false)
-
 	}
-
 
 	/**
 	 * Empties the state (variables/feedbacks).
@@ -333,13 +320,11 @@ class ModuleInstance extends InstanceBase {
 	emptyState() {
 		// Empty the state, but preserve the connected state.
 		this.instanceState = {
-			'connected' : this.instanceState['connected'],
+			connected: this.instanceState['connected'],
 		}
 
 		this.checkFeedbacks('pending_cue', 'active_cue', 'connected')
-
 	}
-
 
 	/**
 	 * Parses a cue's name (and the additional information within it) and updates the internal state.
@@ -355,32 +340,32 @@ class ModuleInstance extends InstanceBase {
 		// let matches = cueName.match(/^(?<CUE_NUMBER>[\d\.]+)( (?<LABEL>.*?))? (?<DURATION>[\d\.]+)( (?<INTENSITY>[\d\.]+%))?$/)
 		//
 		// Fixed to accommodate CUE NUMBER of list/cue, as in 1/1.
-		const cuematch = /^(?<CUE_NUMBER>[\d\.]+\/[\d\.]+|[\d\.]+)?(?<CUEWLIST>\/[\d\.]+)?( (?<LABEL>.*?))? (?<DURATION>[\d\.]+)( (?<INTENSITY>[\d\.]+%))?$/
-		let matches = cueName.match(  cuematch )
+		const cuematch =
+			/^(?<CUE_NUMBER>[\d\.]+\/[\d\.]+|[\d\.]+)?(?<CUEWLIST>\/[\d\.]+)?( (?<LABEL>.*?))? (?<DURATION>[\d\.]+)( (?<INTENSITY>[\d\.]+%))?$/
+		let matches = cueName.match(cuematch)
 
 		if (matches !== null && matches.length >= 6) {
 			// Parse the response.
-			this.setInstanceState(`cue_${type}_label`, matches[3] || matches[2], true);   // Use cue number if label not available.
+			this.setInstanceState(`cue_${type}_label`, matches[3] || matches[2], true) // Use cue number if label not available.
 			this.setInstanceState(`cue_${type}_duration`, matches[5], true)
 
-			if ( matches.length === 8 ) {
+			if (matches.length === 8) {
 				this.setInstanceState(`cue_${type}_intensity`, matches[7], true)
 			}
-
 		} else {
 			// Use as-is. Couldn't parse properly.
 			this.setInstanceState(`cue_${type}_label`, cueName, true)
 		}
 	}
-	
+
 	/**
 	 * Sends the path to the OSC host.
-	 * 
+	 *
 	 * @param path          The OSC path to send
 	 * @param args          An array of arguments, or empty if no arguments needed
 	 * @param appendUser    Whether to append the '/eos/' prefix to the command.
 	 */
-	sendOsc( path, args, appendPrefix ) {
+	sendOsc(path, args, appendPrefix) {
 		if (!this.config.host) {
 			return
 		}
@@ -390,8 +375,8 @@ class ModuleInstance extends InstanceBase {
 		}
 
 		let packet = {
-			address : path,
-			args    : args,
+			address: path,
+			args: args,
 		}
 
 		if (this.debugToLogger) {
@@ -399,25 +384,23 @@ class ModuleInstance extends InstanceBase {
 		}
 
 		this.oscSocket.send(packet)
-
 	}
-	
 
 	/*
 	 * For actions
 	 */
-	setIntensity( prefix, id, value ) {
+	setIntensity(prefix, id, value) {
 		let suffix = ''
 		let arg = []
-	
+
 		if (!isNaN(value)) {
 			// Numeric value as a percentage
 			if (action.action === 'sub_intensity') {
 				// Value must be a float from 0.0 to 1.0 for subs.
-				arg = [ { type: 'f', value: Math.min(100, parseFloat(value)) / 100.0 } ]
+				arg = [{ type: 'f', value: Math.min(100, parseFloat(value)) / 100.0 }]
 			} else {
 				// Value must be an int from 1 to 100 for chans/groups.
-				arg = [ { type: 'f', value: Math.min(100, parseInt(value)) } ]
+				arg = [{ type: 'f', value: Math.min(100, parseInt(value)) }]
 			}
 		} else {
 			// A special command, like "min", "max", "out", "full. Append to command.
@@ -425,7 +408,7 @@ class ModuleInstance extends InstanceBase {
 		}
 
 		this.sendOsc(`${prefix}/${id}${suffix}`, arg)
-	}		
+	}
 }
 
 runEntrypoint(ModuleInstance, UpgradeScripts)
