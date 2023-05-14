@@ -404,42 +404,27 @@ class ModuleInstance extends InstanceBase {
 	
 
 	/*
-	 *
 	 * For actions
-	 *
 	 */
-	// From v2 module, slightly modified to use parseVariablesInString
-	parseOptions( options ) {
-		// Loop through each option for this action, and if any appear to be variables, parse them
-		//  and reassign the result back into 'opt'.
-		for (const key in options) {
-			let v = options[key]
-			if (typeof v === 'string' && v.includes('$(')) {
-				options[key] = await this.parseVariablesInString( v )
-			}
-		}
-		return options
-	}
-
-	setIntensity( prefix, opt ) {
+	setIntensity( prefix, id, value ) {
 		let suffix = ''
 		let arg = []
 	
-		if (opt.value.match(/^\d+$/) !== null) {
+		if (!isNaN(value)) {
 			// Numeric value as a percentage
 			if (action.action === 'sub_intensity') {
 				// Value must be a float from 0.0 to 1.0 for subs.
-				arg = [ { type: 'f', value: Math.min(100, parseFloat(opt.value)) / 100.0 } ]
+				arg = [ { type: 'f', value: Math.min(100, parseFloat(value)) / 100.0 } ]
 			} else {
 				// Value must be an int from 1 to 100 for chans/groups.
-				arg = [ { type: 'f', value: Math.min(100, parseInt(opt.value)) } ]
+				arg = [ { type: 'f', value: Math.min(100, parseInt(value)) } ]
 			}
 		} else {
 			// A special command, like "min", "max", "out", "full. Append to command.
-			suffix = `/${opt.value}`
+			suffix = `/${value}`
 		}
 
-		this.sendOsc(`${prefix}/${opt.id}${suffix}`, arg)
+		this.sendOsc(`${prefix}/${id}${suffix}`, arg)
 	}		
 }
 

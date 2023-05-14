@@ -35,15 +35,10 @@ module.exports = function (self) {
 					],
 				},
 			],
-			callback: async (event) => {
-				let opt = '',
-					before = '',
-					cmd = '',
-					after = ''
-				opt = self.parseOptions(event.options)
-				before = opt.before === 'clear' ? 'newcmd' : 'cmd'
-				cmd = opt.cmd || ''
-				after = opt.after === 'add' ? '' : '#'
+			callback: async (event, context) => {
+				const before = event.options.before === 'clear' ? 'newcmd' : 'cmd'
+				const cmd = await context.parseVariablesInString(event.options.cmd || '')
+				const after = event.options.after === 'add' ? '' : '#'
 
 				self.sendOsc(`${before}`, [{ type: 's', value: `${cmd}${after}` }])
 			},
@@ -59,36 +54,29 @@ module.exports = function (self) {
 					useVariables: true,
 				},
 			],
-			callback: async (event) => {
-				let opt = ''
-				opt = self.parseOptions(event.options)
-				self.sendOsc(opt.osc_path, [], false)
+			callback: async (event, context) => {
+				const osc_path = await context.parseVariablesInString(event.options.osc_path || '')
+				self.sendOsc(osc_path, [], false)
 			},
 		},
 		blackout: {
 			name: 'Key: Blackout',
 			options: [],
-			callback: async (event) => {
-				let opt = ''
-				opt = self.parseOptions(event.options)
+			callback: async (event, context) => {
 				self.sendOsc('key/blackout', [])
 			},
 		},
 		next_cue: {
 			name: 'Key: Go',
 			options: [],
-			callback: async (event) => {
-				let opt = ''
-				opt = self.parseOptions(event.options)
+			callback: async (event, context) => {
 				self.sendOsc(`key/go_0`, [{ type: 'f', value: 1.0 }])
 			},
 		},
 		stop_back: {
 			name: 'Key: Stop/Back',
 			options: [],
-			callback: async (event) => {
-				let opt = ''
-				opt = self.parseOptions(event.options)
+			callback: async (event, context) => {
 				self.sendOsc(`key/stop`, [{ type: 'f', value: 1.0 }])
 			},
 		},
@@ -112,10 +100,10 @@ module.exports = function (self) {
 					useVariables: true,
 				},
 			],
-			callback: async (event) => {
-				let opt = ''
-				opt = self.parseOptions(event.options)
-				self.sendOsc(`cue/${options.list}/${options.number}/fire`, [])
+			callback: async (event, context) => {
+				const list = await context.parseVariablesInString(event.options.list)
+				const number = await context.parseVariablesInString(event.options.number)
+				self.sendOsc(`cue/${list}/${number}/fire`, [])
 			},
 		},
 		run_macro: {
@@ -130,10 +118,9 @@ module.exports = function (self) {
 					useVariables: true,
 				},
 			],
-			callback: async (event) => {
-				let opt = ''
-				opt = self.parseOptions(event.options)
-				self.sendOsc('macro/fire', [{ type: 'i', value: opt.macro }])
+			callback: async (event, context) => {
+				const macro = await context.parseVariablesInString(event.options.macro)
+				self.sendOsc('macro/fire', [{ type: 'i', value: Number(macro) }])
 			},
 		},
 		press_key: {
@@ -148,10 +135,9 @@ module.exports = function (self) {
 					useVariables: true,
 				},
 			],
-			callback: async (event) => {
-				let opt = ''
-				opt = self.parseOptions(event.options)
-				self.sendOsc('key/' + opt.key, [])
+			callback: async (event, context) => {
+				const key = await context.parseVariablesInString(event.options.key)
+				self.sendOsc('key/' + key, [])
 			},
 		},
 		channel_intensity: {
@@ -175,10 +161,11 @@ module.exports = function (self) {
 					useVariables: true,
 				},
 			],
-			callback: async (event) => {
-				let opt = ''
-				opt = self.parseOptions(event.options)
-				setIntensity('chan', opt)
+			callback: async (event, context) => {
+				const id = await context.parseVariablesInString(event.options.id)
+				const value = await context.parseVariablesInString(event.options.value)
+
+				self.setIntensity('chan', id, value)
 			},
 		},
 		group_intensity: {
@@ -202,10 +189,11 @@ module.exports = function (self) {
 					useVariables: true,
 				},
 			],
-			callback: async (event) => {
-				let opt = ''
-				opt = self.parseOptions(event.options)
-				setIntensity('group', opt)
+			callback: async (event, context) => {
+				const id = await context.parseVariablesInString(event.options.id)
+				const value = await context.parseVariablesInString(event.options.value)
+
+				self.setIntensity('group', id, value)
 			},
 		},
 		sub_intensity: {
@@ -229,10 +217,11 @@ module.exports = function (self) {
 					useVariables: true,
 				},
 			],
-			callback: async (event) => {
-				let opt = ''
-				opt = self.parseOptions(event.options)
-				setIntensity('sub', opt)
+			callback: async (event, context) => {
+				const id = await context.parseVariablesInString(event.options.id)
+				const value = await context.parseVariablesInString(event.options.value)
+
+				self.setIntensity('sub', id, value)
 			},
 		},
 		sub_bump: {
@@ -259,10 +248,11 @@ module.exports = function (self) {
 					],
 				},
 			],
-			callback: async (event) => {
-				let opt = ''
-				opt = self.parseOptions(event.options)
-				switch (opt.button) {
+			callback: async (event, context) => {
+				const submaster = await context.parseVariablesInString(event.options.sub)
+
+				let arg
+				switch (event.options.button) {
 					// case 'press': no arg needed
 					case 'hold':
 						arg = { type: 'f', value: 1.0 }
@@ -271,7 +261,8 @@ module.exports = function (self) {
 						arg = { type: 'f', value: 0.0 }
 						break
 				}
-				self.sendOsc(`sub/${opt.sub}/fire`, arg)
+
+				self.sendOsc(`sub/${submaster}/fire`, arg)
 			},
 		},
 		fire_preset: {
@@ -286,10 +277,10 @@ module.exports = function (self) {
 					useVariables: true,
 				},
 			],
-			callback: async (event) => {
-				let opt = ''
-				opt = self.parseOptions(event.options)
-				self.sendOsc(`preset/${opt.preset}/fire`, [])
+			callback: async (event, context) => {
+				const preset = await context.parseVariablesInString(event.options.preset)
+
+				self.sendOsc(`preset/${preset}/fire`, [])
 			},
 		},
 	})
