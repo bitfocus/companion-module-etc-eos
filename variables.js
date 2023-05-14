@@ -1,4 +1,4 @@
-module.exports = async function (self) {
+module.exports = function (self) {
 	let variableDefinitions = [
 		{ variableId: 'cue_active_list', name: 'The active cue list number' },
 		{ variableId: 'cue_active_num', name: 'The active cue number' },

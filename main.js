@@ -1,5 +1,3 @@
-const { combineRgb } = require('@companion-module/base')
-
 const { InstanceBase, Regex, runEntrypoint, InstanceStatus } = require('@companion-module/base')
 const UpgradeScripts = require('./upgrades')
 const UpdateActions = require('./actions')

@@ -1,6 +1,6 @@
 const { combineRgb } = require('@companion-module/base')
 
-module.exports = async function (self) {
+module.exports = function (self) {
 	self.setFeedbackDefinitions({
 		pending_cue: {
 			type: 'boolean',
