@@ -23,14 +23,14 @@ module.exports = async function (self) {
 					type: 'textinput',
 					label: 'Cue List',
 					default: '1',
-					regex: this.REGEX_NUMBER,
+					regex: Regex.NUMBER,
 				},
 				{
 					id: 'list',
 					type: 'textinput',
 					label: 'Cue Number',
 					default: '1',
-					regex: this.REGEX_FLOAT_OR_INT,
+					regex: Regex.FLOAT_OR_INT,
 				},
 			],
 			callback: (feedback) => {
@@ -65,14 +65,14 @@ module.exports = async function (self) {
 					type: 'textinput',
 					label: 'Cue List',
 					default: '1',
-					regex: this.REGEX_NUMBER,
+					regex: Regex.NUMBER,
 				},
 				{
 					id: 'list',
 					type: 'textinput',
 					label: 'Cue Number',
 					default: '1',
-					regex: this.REGEX_FLOAT_OR_INT,
+					regex: Regex.FLOAT_OR_INT,
 				},
 			],
 			callback: (feedback) => {

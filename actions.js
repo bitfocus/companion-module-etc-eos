@@ -1,3 +1,6 @@
+const { Regex } = require('@companion-module/base')
+
+
 module.exports = function (self) {
 	self.setActionDefinitions({
 		custom_cmd: {
@@ -14,6 +17,24 @@ module.exports = function (self) {
 						{ id: 'keep', name: 'Keep command line' },
 					],
 				},
+				{
+					type: 'textinput',
+					label: 'Command',
+					tooltip: 'The command to run.',
+					id: 'cmd',
+					useVariables: true,
+				},
+				{
+					type: 'dropdown',
+					label: 'After',
+					id: 'after',
+					default: 'run',
+					tooltip: 'Add the command to the command line or run it.',
+					choices: [
+						{ id:'add', label:'Add to command line' },
+						{ id:'run', label:'Run this command' },
+					],
+				}
 			],
 			callback: async (event) => {
 				let opt = '', before = '', cmd = '', after = ''
@@ -35,6 +56,7 @@ module.exports = function (self) {
 					type: 'textinput',
 					name: 'OSC path',
 					default: '',
+					useVariables: true,
 				},
 			],
 			callback: async (event) => {
@@ -78,14 +100,16 @@ module.exports = function (self) {
 					type: 'textinput',
 					name: 'Cue List',
 					default: '1',
-					regex: self.REGEX_FLOAT_OR_INT,
+					regex: Regex.FLOAT_OR_INT,
+					useVariables: true,
 				},
 				{
 					id: 'number',
 					type: 'textinput',
 					name: 'Cue Number',
 					default: '1',
-					regex: self.REGEX_FLOAT_OR_INT,
+					regex: Regex.FLOAT_OR_INT,
+					useVariables: true,
 				},
 			],
 			callback: async (event) => {
@@ -102,7 +126,8 @@ module.exports = function (self) {
 					type: 'textinput',
 					name: 'Macro',
 					default: '1',
-					regex: self.REGEX_FLOAT_OR_INT,
+					regex: Regex.FLOAT_OR_INT,
+					useVariables: true,
 				},
 			],
 			callback: async (event) => {
@@ -120,6 +145,7 @@ module.exports = function (self) {
 					name: 'Key',
 					tooltip: "See the module's help for information",
 					default: '1',
+					useVariables: true,
 				},
 			],
 			callback: async (event) => {
@@ -136,7 +162,8 @@ module.exports = function (self) {
 					type: 'textinput',
 					name: 'Channel',
 					default: '1',
-					regex: self.REGEX_FLOAT_OR_INT,
+					regex: Regex.FLOAT_OR_INT,
+					useVariables: true,
 				},
 				{
 					id: 'value',
@@ -145,6 +172,7 @@ module.exports = function (self) {
 					tooltip: "A percentage from 0 to 100, or 'out', 'full', 'min', 'max'.",
 					default: '100',
 					regex: '/^(\\d+|out|full|min|max)$/',
+					useVariables: true,
 				},
 			],
 			callback: async (event) => {
@@ -161,7 +189,8 @@ module.exports = function (self) {
 					type: 'textinput',
 					name: 'Group',
 					default: '1',
-					regex: self.REGEX_FLOAT_OR_INT,
+					regex: Regex.FLOAT_OR_INT,
+					useVariables: true,
 				},
 				{
 					id: 'value',
@@ -170,6 +199,7 @@ module.exports = function (self) {
 					tooltip: "A percentage from 0 to 100, or 'out', 'full', 'min', 'max'.",
 					default: '100',
 					regex: '/^(\\d+|out|full|min|max)$/',
+					useVariables: true,
 				},
 			],
 			callback: async (event) => {
@@ -186,7 +216,8 @@ module.exports = function (self) {
 					type: 'textinput',
 					name: 'Submaster',
 					default: '1',
-					regex: self.REGEX_FLOAT_OR_INT,
+					regex: Regex.FLOAT_OR_INT,
+					useVariables: true,
 				},
 				{
 					id: 'value',
@@ -195,6 +226,7 @@ module.exports = function (self) {
 					tooltip: "A percentage from 0 to 100, or 'out', 'full', 'min', 'max'.",
 					default: '100',
 					regex: '/^(\\d+|out|full|min|max)$/',
+					useVariables: true,
 				},
 			],
 			callback: async (event) => {
@@ -211,7 +243,8 @@ module.exports = function (self) {
 					type: 'textinput',
 					name: 'Submaster',
 					default: '1',
-					regex: self.REGEX_NUMBER,
+					regex: Regex.NUMBER,
+					useVariables: true,
 				},
 				{
 					id: 'button',
@@ -249,7 +282,8 @@ module.exports = function (self) {
 					type: 'textinput',
 					name: 'Preset',
 					default: '1',
-					regex: self.REGEX_NUMBER
+					regex: Regex.FLOAT_OR_INT,
+					useVariables: true,
 				},
 			],
 			callback: async (event) => {

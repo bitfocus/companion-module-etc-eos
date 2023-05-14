@@ -18,8 +18,6 @@ class ModuleInstance extends InstanceBase {
 		// this.updateStatus(InstanceStatus.Ok)		
 		this.updateStatus(InstanceStatus.UnknownWarning)
 		
-		// debug = this.debug
-		// log = this.log
 		this.instanceState = {}
 		this.debugToLogger = true
 		
@@ -56,8 +54,8 @@ class ModuleInstance extends InstanceBase {
 
 		if ( currentHost !== this.config.host
 			|| currentUserId !== this.config.userid ) {
-				self.closeOscSocket()
-				self.init()
+				this.closeOscSocket()
+				await thig.init()
 		}
 	}
 
@@ -104,15 +102,14 @@ class ModuleInstance extends InstanceBase {
 	 * @param isConnected
 	 */
 	setConnectionState( isConnected ) {
-		let self = this
-		let currentState = self.instanceState['connected']
+		let currentState = this.instanceState['connected']
 
 		this.updateStatus(isConnected ? InstanceStatus.Ok : InstanceStatus.UnknownError)
-		self.setInstanceState('connected', isConnected)
+		this.setInstanceState('connected', isConnected)
 
 		if (currentState !== isConnected) {
 			// The connection state changed. Update the feedback.
-			self.checkFeedbacks('connected')
+			this.checkFeedbacks('connected')
 		}
 
 	}
@@ -122,21 +119,18 @@ class ModuleInstance extends InstanceBase {
 	 * Closes the OSC socket.
 	 */
 	closeOscSocket() {
-		let self = this
+		if (this.oscSocket !== undefined) {
+			this.oscSocket.close()
 
-		if (self.oscSocket !== undefined) {
-			self.oscSocket.close()
-
-			if (self.oscSocket.socket !== undefined) {
-				self.oscSocket.socket.destroy()
-				delete self.oscSocket.socket
+			if (selthisf.oscSocket.socket !== undefined) {
+				this.oscSocket.socket.destroy()
+				delete this.oscSocket.socket
 			}
 
-			delete self.oscSocket
+			delete this.oscSocket
 		}
 
-		self.emptyState()
-
+		this.emptyState()
 	}
 
 
@@ -144,22 +138,20 @@ class ModuleInstance extends InstanceBase {
 	 * Watches for disconnects and reconnects to the console.
 	 */
 	startReconnectTimer() {
-		let self = this
-
-		if (self.reconnectTimer !== undefined) {
+		if (this.reconnectTimer !== undefined) {
 			// Timer is already running.
 			return
 		}
 
-		self.reconnectTimer = setInterval(() => {
+		this.reconnectTimer = setInterval(() => {
 
-			if (self.oscSocket !== undefined && self.oscSocket.socket !== undefined && self.oscSocket.socket.readyState === 'open') {
+			if (this.oscSocket !== undefined && this.oscSocket.socket !== undefined && this.oscSocket.socket.readyState === 'open') {
 				// Already connected. Nothing to do.
 				return
 			}
 
 			// Re-open the TCP socket
-			self.oscSocket.socket.connect(self.EOS_OSC_PORT, self.config.host)
+			this.oscSocket.socket.connect(this.EOS_OSC_PORT, this.config.host)
 	
 		}, 5000)
 
@@ -172,12 +164,10 @@ class ModuleInstance extends InstanceBase {
 	 * Optionally updates the dynamic variable with its new value.
 	 */
 	setInstanceState(variable, value, isVariable) {
-		let self = this
-
-		self.instanceState[variable] = value
+		this.instanceState[variable] = value
 
 		if (isVariable) {
-			self.setVariableValues({ [variable]: value })
+			this.setVariableValues({ [variable]: value })
 		}
 
 	}
@@ -187,8 +177,6 @@ class ModuleInstance extends InstanceBase {
 	 * Returns the monkey-patched OSC connection to the console.
 	 */
 	getOsc10Socket(address, port) {
-		let self = this
-
 		let OSC10 = require('osc')
 
 		let oscTcp = new OSC10.TCPSocketPort({
@@ -328,15 +316,13 @@ class ModuleInstance extends InstanceBase {
 	 * Empties the state (variables/feedbacks) and requests the current state from the console.
 	 */
 	requestFullState() {
-		let self = this
-
-		self.emptyState()
+		this.emptyState()
 
 		// Request the current state of the console.
-		self.sendOsc('/eos/reset', [], false)
+		this.sendOsc('/eos/reset', [], false)
 
 		// Switch to the correct user_id.
-		self.sendOsc(`/eos/user=${self.config.user_id}`, [], false)
+		this.sendOsc(`/eos/user=${this.config.user_id}`, [], false)
 
 	}
 
@@ -345,16 +331,12 @@ class ModuleInstance extends InstanceBase {
 	 * Empties the state (variables/feedbacks).
 	 */
 	emptyState() {
-		let self = this
-
 		// Empty the state, but preserve the connected state.
-		self.instanceState = {
-			'connected' : self.instanceState['connected'],
+		this.instanceState = {
+			'connected' : this.instanceState['connected'],
 		}
 
-		self.checkFeedbacks('pending_cue')
-		self.checkFeedbacks('active_cue')
-		self.checkFeedbacks('connected')
+		this.checkFeedbacks('pending_cue', 'active_cue', 'connected')
 
 	}
 
@@ -363,8 +345,6 @@ class ModuleInstance extends InstanceBase {
 	 * Parses a cue's name (and the additional information within it) and updates the internal state.
 	 */
 	parseCueName(type, cueName) {
-		let self = this
-
 		// Cue name will look something like:
 		//  51.1 Drums 3.0 100%
 		//  <CUE NUMBER> <LABEL> <DURATION> [<INTENSITY PERCENTAGE>]
@@ -380,16 +360,16 @@ class ModuleInstance extends InstanceBase {
 
 		if (matches !== null && matches.length >= 6) {
 			// Parse the response.
-			self.setInstanceState(`cue_${type}_label`, matches[3] || matches[2], true);   // Use cue number if label not available.
-			self.setInstanceState(`cue_${type}_duration`, matches[5], true)
+			this.setInstanceState(`cue_${type}_label`, matches[3] || matches[2], true);   // Use cue number if label not available.
+			this.setInstanceState(`cue_${type}_duration`, matches[5], true)
 
 			if ( matches.length === 8 ) {
-				self.setInstanceState(`cue_${type}_intensity`, matches[7], true)
+				this.setInstanceState(`cue_${type}_intensity`, matches[7], true)
 			}
 
 		} else {
 			// Use as-is. Couldn't parse properly.
-			self.setInstanceState(`cue_${type}_label`, cueName, true)
+			this.setInstanceState(`cue_${type}_label`, cueName, true)
 		}
 	}
 	
@@ -401,9 +381,7 @@ class ModuleInstance extends InstanceBase {
 	 * @param appendUser    Whether to append the '/eos/' prefix to the command.
 	 */
 	sendOsc( path, args, appendPrefix ) {
-		let self = this
-
-		if (!self.config.host) {
+		if (!this.config.host) {
 			return
 		}
 
@@ -416,11 +394,11 @@ class ModuleInstance extends InstanceBase {
 			args    : args,
 		}
 
-		if (self.debugToLogger) {
-			self.log('warn', `Eos: Sending packet: ${JSON.stringify(packet)}`)
+		if (this.debugToLogger) {
+			this.log('warn', `Eos: Sending packet: ${JSON.stringify(packet)}`)
 		}
 
-		self.oscSocket.send(packet)
+		this.oscSocket.send(packet)
 
 	}
 	
@@ -432,23 +410,15 @@ class ModuleInstance extends InstanceBase {
 	 */
 	// From v2 module, slightly modified to use parseVariablesInString
 	parseOptions( options ) {
-		let self = this
-		
-		let opt = ''
-
-		// Clone 'action.options', otherwise reassigning the parsed variables directly will push
-		//  them back into the config, because that's done by reference.
-		opt = JSON.parse(JSON.stringify(options))
-
 		// Loop through each option for this action, and if any appear to be variables, parse them
 		//  and reassign the result back into 'opt'.
-		for (const key in opt) {
-			let v = opt[key]
+		for (const key in options) {
+			let v = options[key]
 			if (typeof v === 'string' && v.includes('$(')) {
-				opt[key] = parseVariablesInString( v )
+				options[key] = await this.parseVariablesInString( v )
 			}
 		}
-		return opt
+		return options
 	}
 
 	setIntensity( prefix, opt ) {
@@ -469,7 +439,7 @@ class ModuleInstance extends InstanceBase {
 			suffix = `/${opt.value}`
 		}
 
-		self.sendOsc(`${prefix}/${opt.id}${suffix}`, arg)
+		this.sendOsc(`${prefix}/${opt.id}${suffix}`, arg)
 	}		
 }
 

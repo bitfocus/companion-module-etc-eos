@@ -30,14 +30,14 @@ module.exports = async function (self) {
 			],
 			feedbacks: [
 				{
-					type: 'pending_cue',
+					feedbackId: 'pending_cue',
 					options: {
 						list: '1',
 						number: '#',
 					}
 				},
 				{
-					type: 'active_cue',
+					feedbackId: 'active_cue',
 					options: {
 						list: '1',
 						number: '#',
