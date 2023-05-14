@@ -13,8 +13,7 @@ class ModuleInstance extends InstanceBase {
 	async init(config) {
 		this.config = config
 
-		// this.updateStatus(InstanceStatus.Ok)
-		this.updateStatus(InstanceStatus.UnknownWarning)
+		this.updateStatus(InstanceStatus.Disconnected)
 
 		this.instanceState = {}
 		this.debugToLogger = true
@@ -101,7 +100,7 @@ class ModuleInstance extends InstanceBase {
 	setConnectionState(isConnected) {
 		let currentState = this.instanceState['connected']
 
-		this.updateStatus(isConnected ? InstanceStatus.Ok : InstanceStatus.UnknownError)
+		this.updateStatus(isConnected ? InstanceStatus.Ok : InstanceStatus.Disconnected)
 		this.setInstanceStates({ connected: isConnected })
 
 		if (currentState !== isConnected) {
