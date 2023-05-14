@@ -36,10 +36,12 @@ module.exports = async function (self) {
 
 	self.setVariableDefinitions(variableDefinitions)
 
+	const variableValues = {}
 	// Initialize the default values for the variables
 	for (let i = 0; i < variableDefinitions.length; i++) {
-		self.setVariableValues({ [variableDefinitions[i].variableId]: '' })
+		variableValues[variableDefinitions[i].variableId] = ''
 	}
+	self.setVariableValues(variableValues)
 }
 
 /* For reference on wheel numbers, don't know if this changes or not */
