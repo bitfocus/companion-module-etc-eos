@@ -116,7 +116,7 @@ class ModuleInstance extends InstanceBase {
 		if (this.oscSocket !== undefined) {
 			this.oscSocket.close()
 
-			if (selthisf.oscSocket.socket !== undefined) {
+			if (this.oscSocket.socket !== undefined) {
 				this.oscSocket.socket.destroy()
 				delete this.oscSocket.socket
 			}
