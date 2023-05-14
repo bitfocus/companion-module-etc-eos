@@ -3,10 +3,10 @@
 	"name": "etc-eos",
 	"shortname": "etc-eos",
 	"description": "Interface to the ETC EOS lighting system",
-	"version": "1.3.3",
+	"version": "0.0.0",
 	"license": "MIT",
-	"repository": "git+https://github.com/bitfocus/companion-module-your-module-name.git",
-	"bugs": "https://github.com/bitfocus/companion-module-your-module-name/issues",
+	"repository": "git+https://github.com/bitfocus/companion-module-etc-eos.git",
+	"bugs": "https://github.com/bitfocus/companion-module-etc-eos/issues",
 	"maintainers": [
 		{
 			"name": "Steve Therrien",
@@ -22,5 +22,5 @@
 	"legacyIds": [],
 	"manufacturer": "ETC",
 	"products": ["EOS"],
-	"keywords": []
+	"keywords": ["Lighting"]
 }

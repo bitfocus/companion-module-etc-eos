@@ -1,5 +1,5 @@
 {
-	"name": "etc-eos3",
+	"name": "etc-eos",
 	"version": "3.0.0",
 	"main": "main.js",
 	"scripts": {
@@ -9,7 +9,7 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/bitfocus/companion-module-etc-eos3.git"
+		"url": "git+https://github.com/bitfocus/companion-module-etc-eos.git"
 	},
 	"dependencies": {
 		"@companion-module/base": "~1.4.0",
