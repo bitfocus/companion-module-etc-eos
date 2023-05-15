@@ -154,8 +154,8 @@ command line. If using next/last or other methods the EOS
 software does not consistently send updates on the values.
 
 All of these variables are availabe in a string (integer)
-and a floating point format. Just append _stringvalue or
-_floatvalue to the end of the base name in the table below
+and a floating point format. Just append _stringval or
+_floatval to the end of the base name in the table below
 
 | Variable base name           | Description
 | ---------------------------- | ----------------------------- |
