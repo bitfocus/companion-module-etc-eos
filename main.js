@@ -2,7 +2,7 @@ const { InstanceBase, Regex, runEntrypoint, InstanceStatus } = require('@compani
 const UpgradeScripts = require('./upgrades')
 const UpdateActions = require('./actions')
 const UpdateFeedbacks = require('./feedbacks')
-const UpdateVariableDefinitions = require('./variables')
+const { GetVariableDefinitions, UpdateVariableDefinitions } = require('./variables')
 const UpdatePresetDefinitions = require('./presets')
 
 class ModuleInstance extends InstanceBase {
@@ -206,6 +206,7 @@ class ModuleInstance extends InstanceBase {
 		const showCleared = '/eos/out/event/show/cleared'
 		const softkey = /^\/eos\/out\/softkey\/(\d+)$/
 		const cmd = /^\/eos\/out\/user\/(\d+)\/cmd$/
+		const chan = '/eos/out/active/chan'
 
 		// This is the raw OSC message, but we are getting something parsed already...
 		// const enc_wheel      = /^\/eos\/out\/active\/wheel\/(\d+),\s*(\w+)\s*\[(\w+)\]\(s\).\s+(\d+)\(i\),\s*([\d.]*)\(f\)$/
@@ -263,27 +264,49 @@ class ModuleInstance extends InstanceBase {
 					true
 				)
 			} else if ((matches = message.address.match(cmd))) {
-				let user_id = matches[1]
-				if (user_id === this.config.user_id || this.config.user_id === '-1') {
+				let userid = matches[1]
+				if (userid == this.config.userid || this.config.userid == '-1') {
 					this.setInstanceStates(
 						{
 							cmd: message.args[0].value,
 						},
 						true
 					)
+					// Look for a channel change cmd, and if so, reset our captured encoder values
+					// Looks something like:
+					// "LIVE: Cue  117 : Chan 1 #"
+					let cmdtext
+					cmdtext = message.args[0].value
+					if ( cmdtext.substring(0, 5) == 'LIVE:' ) {
+						let cmdarg_matches
+						cmdarg_matches = cmdtext.match( /Chan\s(\d+)\s#/ )
+						if ( cmdarg_matches != null	&& cmdarg_matches.length == 2) {
+							let variableDefinitions = GetVariableDefinitions()
+							let updateDefs = {}
+							variableDefinitions.forEach( function( varDef ) {
+								if ( /^enc_/.test( varDef['variableId'] ) ) {
+									updateDefs[varDef['variableId']] = ''
+								}
+							})
+							this.setVariableValues(updateDefs)
+						}
+					}
 				}
-			}
-
-			// set variables/state for wheel values
-			else if ((matches = message.address.match(enc_wheel))) {
+			} else if ((matches = message.address.match(enc_wheel))) {
+				// set variables/state for wheel values
 				let wheel_num = matches[1]
 
 				if (wheel_num >= 1) {
 					let wheel_label = message.args[0].value
 					let wheel_stringval = ''
 					let wheel_cat = message.args[1].value || ''
-					let wheel_floatval = message.args[2].value + 0 || '0'
-					wheel_floatval = wheel_floatval.toFixed(2)
+					let wheel_floatval = message.args[2].value
+					if ( wheel_floatval ) {
+						wheel_floatval = Number(wheel_floatval)
+						wheel_floatval = wheel_floatval.toFixed(2)
+					} else {
+						wheel_floatval = 0.00;
+					}
 
 					let wmatches
 					wmatches = wheel_label.match(/^([^\[]*)\s*\[([^\]]*)\]/)
@@ -300,6 +323,19 @@ class ModuleInstance extends InstanceBase {
 						},
 						true
 					)
+					// Set individual wheel params we care about specifically
+					// as the wheel numbers can change.
+					let distinctparam = ''
+					distinctparam = this.getDistinceParamForWheelLabel( wheel_label )
+					if ( distinctparam != '' ) {
+						this.setInstanceStates(
+							{
+								[`${distinctparam}_stringval`]: wheel_stringval,
+								[`${distinctparam}_floatval`]: wheel_floatval,
+							},
+							true
+						)
+					}
 				}
 			}
 		})
@@ -434,6 +470,99 @@ class ModuleInstance extends InstanceBase {
 		}
 
 		this.sendOsc(`${prefix}/${id}${suffix}`, arg)
+	}
+	
+	getDistinceParamForWheelLabel( wheel_label ) {
+		// Below are regex tests for the label name in a switch instead of
+		// cascading if statements. These are case insensitive tests
+		let distinctparam = ''
+		switch ( true ) {
+			case /^Intens$/i.test( wheel_label):
+				distinctparam = 'enc_intensity'
+				break;
+			case /^Zoom/.test( wheel_label ):
+				distinctparam = 'enc_zoom'
+				break;
+			case /^Edge$/.test( wheel_label ):
+				distinctparam = 'enc_edge'
+				break;
+			case /^Iris$/.test( wheel_label ):
+				distinctparam = 'enc_iris'
+				break;
+			case /^Pan$/.test( wheel_label ):
+				distinctparam = 'enc_pan'
+				break;
+			case /^Tilt$/.test( wheel_label ):
+				distinctparam = 'enc_tilt'
+				break;
+			case /^X Focus$/.test( wheel_label ):
+				distinctparam = 'enc_x_focus'
+				break;
+			case /^Y Focus$/.test( wheel_label ):
+				distinctparam = 'enc_y_focus'
+				break;
+			case /^Z Focus$/.test( wheel_label ):
+				distinctparam = 'enc_z_focus'
+				break;
+			case /^Red$/.test( wheel_label ):
+				distinctparam = 'enc_red'
+				break;
+			case /^Green$/.test( wheel_label ):
+				distinctparam = 'enc_green'
+				break;
+			case /^Blue$/.test( wheel_label ):
+				distinctparam = 'enc_blue'
+				break;
+			case /^White$/.test( wheel_label ):
+				distinctparam = 'enc_blue'
+				break;
+			case /^Cyan$/.test( wheel_label ):
+				distinctparam = 'enc_cyan'
+				break;
+			case /^Magenta$/.test( wheel_label ):
+				distinctparam = 'enc_magenta'
+				break;
+			case /^Yellow$/.test( wheel_label ):
+				distinctparam = 'enc_yellow'
+				break;
+			case /^Amber$/.test( wheel_label ):
+				distinctparam = 'enc_amber'
+				break;
+			case /^Lime$/.test( wheel_label ):
+				distinctparam = 'enc_Lime'
+				break;
+			case /^Indigo$/.test( wheel_label ):
+				distinctparam = 'enc_indigo'
+				break;
+			case /^UV$/.test( wheel_label ):
+				distinctparam = 'enc_uv'
+				break;
+			case /^Hue$/.test( wheel_label ):
+				distinctparam = 'enc_hue'
+				break;
+			case /^CTO$/.test( wheel_label ):
+				distinctparam = 'enc_cto'
+				break;
+			case /^C1$/.test( wheel_label ):
+				distinctparam = 'enc_c1'
+				break;
+			case /^C2$/.test( wheel_label ):
+				distinctparam = 'enc_c2'
+				break;
+			case /^CTC$/.test( wheel_label ):
+				distinctparam = 'enc_ctc'
+				break;
+			case /^Shutter Strobe$/.test( wheel_label ):
+				distinctparam = 'enc_shutter_strobe'
+				break;
+			case /^Saturatn$/.test( wheel_label ):
+				distinctparam = 'enc_saturation'
+				break;
+			case /^Diffusion$/.test( wheel_label ):
+				distinctparam = 'enc_diffusion'
+				break;
+		}
+		return distinctparam
 	}
 }
 

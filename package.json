@@ -16,7 +16,8 @@
 		"osc": "github:julusian/osc.js#companion-etc-eos"
 	},
 	"devDependencies": {
-		"@companion-module/tools": "^1.2.0"
+		"@companion-module/tools": "^1.2.0",
+		"serialport": "^11.0.0"
 	},
 	"prettier": "@companion-module/tools/.prettierrc.json"
 }
