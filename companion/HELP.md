@@ -177,13 +177,13 @@ _floatval to the end of the base name in the table below
 |  enc_yellow                  | Encoder: Yellow level         | 
 |  enc_amber                   | Encoder: Amber level          | 
 |  enc_lime                    | Encoder: Lime level           | 
-|  enc_indigo                  | Encoder: UV level             | 
+|  enc_indigo                  | Encoder: Indigo level             | 
 |  enc_uv                      | Encoder: UV level             | 
 |  enc_hue                     | Encoder: Hue level            | 
-|  enc_cto                     | Encoder: Hue level            | 
-|  enc_c1                      | Encoder: Hue level            | 
-|  enc_c2                      | Encoder: Hue level            | 
-|  enc_ctc                     | Encoder: Hue level            | 
+|  enc_cto                     | Encoder: CTO level            | 
+|  enc_c1                      | Encoder: C1 level            | 
+|  enc_c2                      | Encoder: C2 level            | 
+|  enc_ctc                     | Encoder: CTC level            | 
 |  enc_shutter_strobe          | Encoder: Shutter Strobe level | 
 |  enc_saturation              | Encoder: Saturation level     | 
 |  enc_diffusion               | Encoder: Diffusion level      | 
