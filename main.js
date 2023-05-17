@@ -272,24 +272,21 @@ class ModuleInstance extends InstanceBase {
 						},
 						true
 					)
-					// Look for a channel change cmd, and if so, reset our captured encoder values
-					// Looks something like:
-					// "LIVE: Cue  117 : Chan 1 #"
-					let cmdtext
-					cmdtext = message.args[0].value
-					if ( cmdtext.substring(0, 5) == 'LIVE:' ) {
-						let cmdarg_matches
-						cmdarg_matches = cmdtext.match( /Chan\s(\d+)\s#/ )
-						if ( cmdarg_matches != null	&& cmdarg_matches.length == 2) {
-							let variableDefinitions = GetVariableDefinitions()
-							let updateDefs = {}
-							variableDefinitions.forEach( function( varDef ) {
-								if ( /^enc_/.test( varDef['variableId'] ) ) {
-									updateDefs[varDef['variableId']] = ''
-								}
-							})
-							this.setVariableValues(updateDefs)
-						}
+				}
+			} else if (matches = message.address.match(chan)) {
+				// Thismay be a better place to reset our parameter data variables
+				let chantext
+				chantext = message.args[0].value
+				let chanarg_matches
+				chanarg_matches = chantext.match( /^(\d+)/ )
+				if ( chanarg_matches.length > 0 ) {
+					let actChan
+					actChan = chanarg_matches[1]
+					// if channel changed, we need to get full set of wheel data
+					if ( actChan != this.lastActChan ) {
+						this.emptyEncVariables()
+						this.requestFullState()
+						this.lastActChan = actChan
 					}
 				}
 			} else if ((matches = message.address.match(enc_wheel))) {
@@ -297,11 +294,12 @@ class ModuleInstance extends InstanceBase {
 				let wheel_num = matches[1]
 
 				if (wheel_num >= 1) {
+				this.log('debug', '***** wheel message: ' + JSON.stringify(message))
 					let wheel_label = message.args[0].value
-					let wheel_stringval = ''
-					let wheel_cat = message.args[1].value || ''
+					let wheel_stringval = '0'
+					let wheel_cat = message.args[1].value || 0
 					let wheel_floatval = message.args[2].value
-					if ( wheel_floatval ) {
+					if ( wheel_floatval != null ) {
 						wheel_floatval = Number(wheel_floatval)
 						wheel_floatval = wheel_floatval.toFixed(2)
 					} else {
@@ -352,6 +350,20 @@ class ModuleInstance extends InstanceBase {
 		})
 
 		// this.oscSocket.socket.on('ready', () => { })
+	}
+
+	/**
+	 * Reset our internal variables
+	 */
+	emptyEncVariables() {
+		let variableDefinitions = GetVariableDefinitions()
+		let updateDefs = {}
+		variableDefinitions.forEach( function( varDef ) {
+			if ( /^enc_/.test( varDef['variableId'] ) ) {
+				updateDefs[varDef['variableId']] = ''
+			}
+		})
+		this.setVariableValues(updateDefs)
 	}
 
 	/**
