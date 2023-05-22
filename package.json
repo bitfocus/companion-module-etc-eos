@@ -1,6 +1,6 @@
 {
 	"name": "etc-eos",
-	"version": "2.0.0",
+	"version": "2.0.1",
 	"main": "main.js",
 	"scripts": {
 		"format": "prettier -w .",
@@ -16,7 +16,8 @@
 		"osc": "github:julusian/osc.js#companion-etc-eos"
 	},
 	"devDependencies": {
-		"@companion-module/tools": "^1.2.0"
+		"@companion-module/tools": "^1.2.0",
+		"serialport": "^11.0.0"
 	},
 	"prettier": "@companion-module/tools/.prettierrc.json"
 }
