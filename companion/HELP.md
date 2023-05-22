@@ -148,6 +148,48 @@ Based on initial testing, the wheels are numbered like so:
 In testing, I only saw 39 reported, but if more exist the count will have to
 be adjusted.
 
+These parameters are reported when working with a fixture.
+You must select the fixture by typing its number on the
+command line. If using next/last or other methods the EOS
+software does not consistently send updates on the values.
+
+All of these variables are availabe in a string (integer)
+and a floating point format. Just append _stringval or
+_floatval to the end of the base name in the table below
+
+| Variable base name           | Description
+| ---------------------------- | ----------------------------- |
+|  enc_intensity               | Encoder: Intensity level      | 
+|  enc_zoom                    | Encoder: Zoom level           | 
+|  enc_edge                    | Encoder: Edge level           | 
+|  enc_iris                    | Encoder: Iris level           | 
+|  enc_pan                     | Encoder: Pan level            | 
+|  enc_tilt                    | Encoder: Tilt level           | 
+|  enc_x_focus                 | Encoder: X Focus level        | 
+|  enc_y_focus                 | Encoder: Y Focus level        | 
+|  enc_z_focus                 | Encoder: Z Focus level        | 
+|  enc_red                     | Encoder: Red level            | 
+|  enc_green                   | Encoder: Green level          | 
+|  enc_blue                    | Encoder: Blue level           | 
+|  enc_white                   | Encoder: White level          | 
+|  enc_cyan                    | Encoder: Cyan level           | 
+|  enc_magenta                 | Encoder: Magenta level        | 
+|  enc_yellow                  | Encoder: Yellow level         | 
+|  enc_amber                   | Encoder: Amber level          | 
+|  enc_lime                    | Encoder: Lime level           | 
+|  enc_indigo                  | Encoder: Indigo level             | 
+|  enc_uv                      | Encoder: UV level             | 
+|  enc_hue                     | Encoder: Hue level            | 
+|  enc_cto                     | Encoder: CTO level            | 
+|  enc_c1                      | Encoder: C1 level            | 
+|  enc_c2                      | Encoder: C2 level            | 
+|  enc_ctc                     | Encoder: CTC level            | 
+|  enc_shutter_strobe          | Encoder: Shutter Strobe level | 
+|  enc_saturation              | Encoder: Saturation level     | 
+|  enc_diffusion               | Encoder: Diffusion level      | 
+
+
+
 ## Feedbacks
 
 Feedbacks let a button's style change when something happens. There are three feedbacks available:
