@@ -45,13 +45,13 @@ class ModuleInstance extends InstanceBase {
 
 	async configUpdated(config) {
 		let currentHost = this.config.host
-		let currentUserId = this.config.userid
+		let currentUserId = this.config.user_id
 
 		this.config = config
 
-		if (currentHost !== this.config.host || currentUserId !== this.config.userid) {
+		if (currentHost !== this.config.host || currentUserId !== this.config.user_id) {
 			this.closeOscSocket()
-			await this.init()
+			await this.init(config)
 		}
 	}
 
@@ -137,11 +137,12 @@ class ModuleInstance extends InstanceBase {
 		}
 
 		this.reconnectTimer = setInterval(() => {
-			if (
-				this.oscSocket !== undefined &&
-				this.oscSocket.socket !== undefined &&
-				this.oscSocket.socket.readyState === 'open'
-			) {
+			if (!this.oscSocket || !this.oscSocket.socket) {
+				// Socket not valid
+				return
+			}
+
+			if (this.oscSocket.socket.readyState === 'open') {
 				// Already connected. Nothing to do.
 				return
 			}
@@ -273,14 +274,14 @@ class ModuleInstance extends InstanceBase {
 						true
 					)
 				}
-			} else if (matches = message.address.match(chan)) {
+			} else if ((matches = message.address.match(chan))) {
 				// Thismay be a better place to reset our parameter data variables
 				let chantext = message.args[0].value
-				let chanarg_matches = chantext.match( /^(\d+)/ )
-				if ( chanarg_matches.length > 0 ) {
+				let chanarg_matches = chantext.match(/^(\d+)/)
+				if (chanarg_matches.length > 0) {
 					let actChan = chanarg_matches[1]
 					// if channel changed, we need to get full set of wheel data
-					if ( actChan != this.lastActChan ) {
+					if (actChan != this.lastActChan) {
 						this.emptyEncVariables()
 						this.requestFullState()
 						this.lastActChan = actChan
@@ -291,16 +292,16 @@ class ModuleInstance extends InstanceBase {
 				let wheel_num = matches[1]
 
 				if (wheel_num >= 1) {
-				this.log('debug', '***** wheel message: ' + JSON.stringify(message))
+					this.log('debug', '***** wheel message: ' + JSON.stringify(message))
 					let wheel_label = message.args[0].value
 					let wheel_stringval = '0'
 					let wheel_cat = message.args[1].value || 0
 					let wheel_floatval = message.args[2].value
-					if ( wheel_floatval != null ) {
+					if (wheel_floatval != null) {
 						wheel_floatval = Number(wheel_floatval)
 						wheel_floatval = wheel_floatval.toFixed(2)
 					} else {
-						wheel_floatval = 0.00;
+						wheel_floatval = 0.0
 					}
 
 					let wmatches
@@ -320,8 +321,8 @@ class ModuleInstance extends InstanceBase {
 					)
 					// Set individual wheel params we care about specifically
 					// as the wheel numbers can change.
-					let distinctparam = this.getDistinceParamForWheelLabel( wheel_label )
-					if ( distinctparam != '' ) {
+					let distinctparam = this.getDistinceParamForWheelLabel(wheel_label)
+					if (distinctparam != '') {
 						this.setInstanceStates(
 							{
 								[`${distinctparam}_stringval`]: wheel_stringval,
@@ -354,7 +355,7 @@ class ModuleInstance extends InstanceBase {
 	emptyEncVariables() {
 		let variableDefinitions = GetVariableDefinitions()
 		let updateDefs = {}
-		variableDefinitions.forEach( function( varDef ) {
+		variableDefinitions.forEach(function (varDef) {
 			if (varDef['variableId'].startWith('enc_')) {
 				updateDefs[varDef['variableId']] = ''
 			}
@@ -479,96 +480,96 @@ class ModuleInstance extends InstanceBase {
 
 		this.sendOsc(`${prefix}/${id}${suffix}`, arg)
 	}
-	
-	getDistinceParamForWheelLabel( wheel_label ) {
+
+	getDistinceParamForWheelLabel(wheel_label) {
 		// Below are regex tests for the label name in a switch instead of
 		// cascading if statements. These are case insensitive tests
 		let distinctparam = ''
-		switch ( true ) {
-			case /^Intens$/i.test( wheel_label):
+		switch (true) {
+			case /^Intens$/i.test(wheel_label):
 				distinctparam = 'enc_intensity'
-				break;
-			case /^Zoom/.test( wheel_label ):
+				break
+			case /^Zoom/.test(wheel_label):
 				distinctparam = 'enc_zoom'
-				break;
-			case /^Edge$/.test( wheel_label ):
+				break
+			case /^Edge$/.test(wheel_label):
 				distinctparam = 'enc_edge'
-				break;
-			case /^Iris$/.test( wheel_label ):
+				break
+			case /^Iris$/.test(wheel_label):
 				distinctparam = 'enc_iris'
-				break;
-			case /^Pan$/.test( wheel_label ):
+				break
+			case /^Pan$/.test(wheel_label):
 				distinctparam = 'enc_pan'
-				break;
-			case /^Tilt$/.test( wheel_label ):
+				break
+			case /^Tilt$/.test(wheel_label):
 				distinctparam = 'enc_tilt'
-				break;
-			case /^X Focus$/.test( wheel_label ):
+				break
+			case /^X Focus$/.test(wheel_label):
 				distinctparam = 'enc_x_focus'
-				break;
-			case /^Y Focus$/.test( wheel_label ):
+				break
+			case /^Y Focus$/.test(wheel_label):
 				distinctparam = 'enc_y_focus'
-				break;
-			case /^Z Focus$/.test( wheel_label ):
+				break
+			case /^Z Focus$/.test(wheel_label):
 				distinctparam = 'enc_z_focus'
-				break;
-			case /^Red$/.test( wheel_label ):
+				break
+			case /^Red$/.test(wheel_label):
 				distinctparam = 'enc_red'
-				break;
-			case /^Green$/.test( wheel_label ):
+				break
+			case /^Green$/.test(wheel_label):
 				distinctparam = 'enc_green'
-				break;
-			case /^Blue$/.test( wheel_label ):
+				break
+			case /^Blue$/.test(wheel_label):
 				distinctparam = 'enc_blue'
-				break;
-			case /^White$/.test( wheel_label ):
+				break
+			case /^White$/.test(wheel_label):
 				distinctparam = 'enc_blue'
-				break;
-			case /^Cyan$/.test( wheel_label ):
+				break
+			case /^Cyan$/.test(wheel_label):
 				distinctparam = 'enc_cyan'
-				break;
-			case /^Magenta$/.test( wheel_label ):
+				break
+			case /^Magenta$/.test(wheel_label):
 				distinctparam = 'enc_magenta'
-				break;
-			case /^Yellow$/.test( wheel_label ):
+				break
+			case /^Yellow$/.test(wheel_label):
 				distinctparam = 'enc_yellow'
-				break;
-			case /^Amber$/.test( wheel_label ):
+				break
+			case /^Amber$/.test(wheel_label):
 				distinctparam = 'enc_amber'
-				break;
-			case /^Lime$/.test( wheel_label ):
+				break
+			case /^Lime$/.test(wheel_label):
 				distinctparam = 'enc_Lime'
-				break;
-			case /^Indigo$/.test( wheel_label ):
+				break
+			case /^Indigo$/.test(wheel_label):
 				distinctparam = 'enc_indigo'
-				break;
-			case /^UV$/.test( wheel_label ):
+				break
+			case /^UV$/.test(wheel_label):
 				distinctparam = 'enc_uv'
-				break;
-			case /^Hue$/.test( wheel_label ):
+				break
+			case /^Hue$/.test(wheel_label):
 				distinctparam = 'enc_hue'
-				break;
-			case /^CTO$/.test( wheel_label ):
+				break
+			case /^CTO$/.test(wheel_label):
 				distinctparam = 'enc_cto'
-				break;
-			case /^C1$/.test( wheel_label ):
+				break
+			case /^C1$/.test(wheel_label):
 				distinctparam = 'enc_c1'
-				break;
-			case /^C2$/.test( wheel_label ):
+				break
+			case /^C2$/.test(wheel_label):
 				distinctparam = 'enc_c2'
-				break;
-			case /^CTC$/.test( wheel_label ):
+				break
+			case /^CTC$/.test(wheel_label):
 				distinctparam = 'enc_ctc'
-				break;
-			case /^Shutter Strobe$/.test( wheel_label ):
+				break
+			case /^Shutter Strobe$/.test(wheel_label):
 				distinctparam = 'enc_shutter_strobe'
-				break;
-			case /^Saturatn$/.test( wheel_label ):
+				break
+			case /^Saturatn$/.test(wheel_label):
 				distinctparam = 'enc_saturation'
-				break;
-			case /^Diffusion$/.test( wheel_label ):
+				break
+			case /^Diffusion$/.test(wheel_label):
 				distinctparam = 'enc_diffusion'
-				break;
+				break
 		}
 		return distinctparam
 	}
