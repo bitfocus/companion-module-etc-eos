@@ -67,7 +67,7 @@ class ModuleInstance extends InstanceBase {
 			},
 			{
 				type: 'textinput',
-				id: 'userid',
+				id: 'user_id',
 				label: 'User ID',
 				default: 1,
 				width: 4,
