@@ -265,7 +265,7 @@ class ModuleInstance extends InstanceBase {
 				)
 			} else if ((matches = message.address.match(cmd))) {
 				let userid = matches[1]
-				if (userid == this.config.userid || this.config.userid == '-1') {
+				if (userid == this.config.user_id || this.config.user_id == '-1') {
 					this.setInstanceStates(
 						{
 							cmd: message.args[0].value,
@@ -275,13 +275,10 @@ class ModuleInstance extends InstanceBase {
 				}
 			} else if (matches = message.address.match(chan)) {
 				// Thismay be a better place to reset our parameter data variables
-				let chantext
-				chantext = message.args[0].value
-				let chanarg_matches
-				chanarg_matches = chantext.match( /^(\d+)/ )
+				let chantext = message.args[0].value
+				let chanarg_matches = chantext.match( /^(\d+)/ )
 				if ( chanarg_matches.length > 0 ) {
-					let actChan
-					actChan = chanarg_matches[1]
+					let actChan = chanarg_matches[1]
 					// if channel changed, we need to get full set of wheel data
 					if ( actChan != this.lastActChan ) {
 						this.emptyEncVariables()
@@ -323,8 +320,7 @@ class ModuleInstance extends InstanceBase {
 					)
 					// Set individual wheel params we care about specifically
 					// as the wheel numbers can change.
-					let distinctparam = ''
-					distinctparam = this.getDistinceParamForWheelLabel( wheel_label )
+					let distinctparam = this.getDistinceParamForWheelLabel( wheel_label )
 					if ( distinctparam != '' ) {
 						this.setInstanceStates(
 							{
@@ -359,7 +355,7 @@ class ModuleInstance extends InstanceBase {
 		let variableDefinitions = GetVariableDefinitions()
 		let updateDefs = {}
 		variableDefinitions.forEach( function( varDef ) {
-			if ( /^enc_/.test( varDef['variableId'] ) ) {
+			if (varDef['variableId'].startWith('enc_')) {
 				updateDefs[varDef['variableId']] = ''
 			}
 		})
