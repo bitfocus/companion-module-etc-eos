@@ -321,7 +321,7 @@ class ModuleInstance extends InstanceBase {
 					)
 					// Set individual wheel params we care about specifically
 					// as the wheel numbers can change.
-					let distinctparam = this.getDistinceParamForWheelLabel(wheel_label)
+					let distinctparam = this.getDistinctParamForWheelLabel(wheel_label)
 					if (distinctparam != '') {
 						this.setInstanceStates(
 							{
@@ -481,95 +481,49 @@ class ModuleInstance extends InstanceBase {
 		this.sendOsc(`${prefix}/${id}${suffix}`, arg)
 	}
 
-	getDistinceParamForWheelLabel(wheel_label) {
-		// Below are regex tests for the label name in a switch instead of
-		// cascading if statements. These are case insensitive tests
+	getDistinctParamForWheelLabel(wheel_label) {
 		let distinctparam = ''
-		switch (true) {
-			case /^Intens$/i.test(wheel_label):
-				distinctparam = 'enc_intensity'
-				break
-			case /^Zoom/.test(wheel_label):
-				distinctparam = 'enc_zoom'
-				break
-			case /^Edge$/.test(wheel_label):
-				distinctparam = 'enc_edge'
-				break
-			case /^Iris$/.test(wheel_label):
-				distinctparam = 'enc_iris'
-				break
-			case /^Pan$/.test(wheel_label):
-				distinctparam = 'enc_pan'
-				break
-			case /^Tilt$/.test(wheel_label):
-				distinctparam = 'enc_tilt'
-				break
-			case /^X Focus$/.test(wheel_label):
-				distinctparam = 'enc_x_focus'
-				break
-			case /^Y Focus$/.test(wheel_label):
-				distinctparam = 'enc_y_focus'
-				break
-			case /^Z Focus$/.test(wheel_label):
-				distinctparam = 'enc_z_focus'
-				break
-			case /^Red$/.test(wheel_label):
-				distinctparam = 'enc_red'
-				break
-			case /^Green$/.test(wheel_label):
-				distinctparam = 'enc_green'
-				break
-			case /^Blue$/.test(wheel_label):
-				distinctparam = 'enc_blue'
-				break
-			case /^White$/.test(wheel_label):
-				distinctparam = 'enc_blue'
-				break
-			case /^Cyan$/.test(wheel_label):
-				distinctparam = 'enc_cyan'
-				break
-			case /^Magenta$/.test(wheel_label):
-				distinctparam = 'enc_magenta'
-				break
-			case /^Yellow$/.test(wheel_label):
-				distinctparam = 'enc_yellow'
-				break
-			case /^Amber$/.test(wheel_label):
-				distinctparam = 'enc_amber'
-				break
-			case /^Lime$/.test(wheel_label):
-				distinctparam = 'enc_Lime'
-				break
-			case /^Indigo$/.test(wheel_label):
-				distinctparam = 'enc_indigo'
-				break
-			case /^UV$/.test(wheel_label):
-				distinctparam = 'enc_uv'
-				break
-			case /^Hue$/.test(wheel_label):
-				distinctparam = 'enc_hue'
-				break
-			case /^CTO$/.test(wheel_label):
-				distinctparam = 'enc_cto'
-				break
-			case /^C1$/.test(wheel_label):
-				distinctparam = 'enc_c1'
-				break
-			case /^C2$/.test(wheel_label):
-				distinctparam = 'enc_c2'
-				break
-			case /^CTC$/.test(wheel_label):
-				distinctparam = 'enc_ctc'
-				break
-			case /^Shutter Strobe$/.test(wheel_label):
-				distinctparam = 'enc_shutter_strobe'
-				break
-			case /^Saturatn$/.test(wheel_label):
-				distinctparam = 'enc_saturation'
-				break
-			case /^Diffusion$/.test(wheel_label):
-				distinctparam = 'enc_diffusion'
-				break
+		if ( wheel_label != null && wheel_label != '' ) {
+			// note: key is lower case
+			// This is the value EOS returns as the label
+			// for wheel data.
+			//
+			// Note: if you add something here, you also
+			// have to add it to the variables list
+			let paramMap = {
+				'intens': 				'enc_intensity',
+				'zoom':					'enc_zoom',
+				'edge':					'enc_edge',
+				'iris':					'enc_iris',
+				'pan':					'enc_pan',
+				'tilt':					'enc_tilt',
+				'x focus':				'enc_x_focus',
+				'y focus':				'enc_y_focus',
+				'z focus':				'enc_z_focus',
+				'red':					'enc_red',
+				'green':				'enc_green',
+				'blue':					'enc_blue',
+				'cyan':					'enc_cyan',
+				'magenta':				'enc_magenta',
+				'yellow':				'enc_yellow',
+				'amber':				'enc_amber',
+				'lime':					'enc_lime',
+				'indigo':				'enc_indigo',
+				'uv':					'enc_uv',
+				'hue':					'enc_hue',
+				'cto':					'enc_cto',
+				'color select':			'enc_c1',
+				'color mix mspeed':		'enc_c2',
+				'ctc':					'enc_ctc',
+				'shutter strobe':		'enc_shutter_strobe',
+				'saturatn':				'enc_saturation',
+				'diffusion':			'enc_diffusion',
+			}
+
+			let lc_wheel_label = wheel_label.toLowerCase()
+			if ( lc_wheel_label in paramMap ) {
+				distinctparam = paramMap[ lc_wheel_label ]
+			}
 		}
 		return distinctparam
 	}
