@@ -19,6 +19,7 @@ class ModuleInstance extends InstanceBase {
 		this.debugToLogger = true
 
 		this.EOS_OSC_PORT = 3032
+		this.lastActChan = 0
 
 		this.updateActions() // export actions
 		this.updateFeedbacks() // export feedbacks
@@ -275,7 +276,7 @@ class ModuleInstance extends InstanceBase {
 					)
 				}
 			} else if ((matches = message.address.match(chan))) {
-				// Thismay be a better place to reset our parameter data variables
+				// This may be a better place to reset our parameter data variables
 				let chantext = message.args[0].value
 				let chanarg_matches = chantext.match(/^(\d+)/)
 				if (chanarg_matches.length > 0) {
@@ -292,7 +293,7 @@ class ModuleInstance extends InstanceBase {
 				let wheel_num = matches[1]
 
 				if (wheel_num >= 1) {
-					this.log('debug', '***** wheel message: ' + JSON.stringify(message))
+					// this.log('debug', '***** wheel message: ' + JSON.stringify(message))
 					let wheel_label = message.args[0].value
 					let wheel_stringval = '0'
 					let wheel_cat = message.args[1].value || 0
@@ -356,10 +357,10 @@ class ModuleInstance extends InstanceBase {
 		let variableDefinitions = GetVariableDefinitions()
 		let updateDefs = {}
 		variableDefinitions.forEach(function (varDef) {
-			if (varDef['variableId'].startWith('enc_')) {
+			if (varDef['variableId'].startsWith('enc_')) {
 				updateDefs[varDef['variableId']] = ''
 			}
-		})
+		}, this)
 		this.setVariableValues(updateDefs)
 	}
 
