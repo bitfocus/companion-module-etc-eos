@@ -179,16 +179,16 @@ _floatval to the end of the base name in the table below
 |  enc_lime                    | Encoder: Lime                 | 
 |  enc_indigo                  | Encoder: Indigo               | 
 |  enc_uv                      | Encoder: UV                   | 
-|  enc_red adjust              | Encoder: Red Adj              | 
-|  enc_green adjust            | Encoder: Green Adj            | 
-|  enc_blue adjust             | Encoder: Blue Adj             | 
-|  enc_white adjust            | Encoder: White Adj            | 
-|  enc_cyan adjust             | Encoder: Cyan Adj             | 
-|  enc_magenta adjust          | Encoder: Magenta Adj          | 
-|  enc_yellow adjust           | Encoder: Yellow Adj           | 
-|  enc_amber adjust            | Encoder: Amber Adj            | 
-|  enc_lime adjust             | Encoder: Lime Adj             | 
-|  enc_indigo adjust           | Encoder: Indigo               | 
+|  enc_red_adj                 | Encoder: Red Adj              | 
+|  enc_green_adj               | Encoder: Green Adj            | 
+|  enc_blue_adj                | Encoder: Blue Adj             | 
+|  enc_white_adj               | Encoder: White Adj            | 
+|  enc_cyan_adj                | Encoder: Cyan Adj             | 
+|  enc_magenta_adj             | Encoder: Magenta Adj          | 
+|  enc_yellow_adj              | Encoder: Yellow Adj           | 
+|  enc_amber_adj               | Encoder: Amber Adj            | 
+|  enc_lime_adj                | Encoder: Lime Adj             | 
+|  enc_indigo_adj              | Encoder: Indigo               | 
 |  enc_hue                     | Encoder: Hue                  | 
 |  enc_cto                     | Encoder: CTO                  | 
 |  enc_c1                      | Encoder: Color Select         | 
@@ -197,7 +197,15 @@ _floatval to the end of the base name in the table below
 |  enc_shutter_strobe          | Encoder: Shutter Strobe       | 
 |  enc_saturation              | Encoder: Saturation           | 
 |  enc_diffusion               | Encoder: Diffusion            | 
-
+|  enc_angle_a                 | Encoder: Angle A              | 
+|  enc_angle_b                 | Encoder: Angle B              | 
+|  enc_angle_c                 | Encoder: Angle C              | 
+|  enc_angle_d                 | Encoder: Angle D              | 
+|  enc_thrust_a                | Encoder: Thrust A             | 
+|  enc_thrust_b                | Encoder: Thrust B             | 
+|  enc_thrust_c                | Encoder: Thrust C             | 
+|  enc_thrust_d                | Encoder: Thrust D             | 
+|  enc_frame_assembly          | Encoder: Frame Assembly       | 
 
 
 ## Feedbacks
