@@ -157,36 +157,46 @@ All of these variables are availabe in a string (integer)
 and a floating point format. Just append _stringval or
 _floatval to the end of the base name in the table below
 
-| Variable base name           | Description
+| Variable base name           |       Description
 | ---------------------------- | ----------------------------- |
-|  enc_intensity               | Encoder: Intensity level      | 
-|  enc_zoom                    | Encoder: Zoom level           | 
-|  enc_edge                    | Encoder: Edge level           | 
-|  enc_iris                    | Encoder: Iris level           | 
-|  enc_pan                     | Encoder: Pan level            | 
-|  enc_tilt                    | Encoder: Tilt level           | 
-|  enc_x_focus                 | Encoder: X Focus level        | 
-|  enc_y_focus                 | Encoder: Y Focus level        | 
-|  enc_z_focus                 | Encoder: Z Focus level        | 
-|  enc_red                     | Encoder: Red level            | 
-|  enc_green                   | Encoder: Green level          | 
-|  enc_blue                    | Encoder: Blue level           | 
-|  enc_white                   | Encoder: White level          | 
-|  enc_cyan                    | Encoder: Cyan level           | 
-|  enc_magenta                 | Encoder: Magenta level        | 
-|  enc_yellow                  | Encoder: Yellow level         | 
-|  enc_amber                   | Encoder: Amber level          | 
-|  enc_lime                    | Encoder: Lime level           | 
-|  enc_indigo                  | Encoder: Indigo level             | 
-|  enc_uv                      | Encoder: UV level             | 
-|  enc_hue                     | Encoder: Hue level            | 
-|  enc_cto                     | Encoder: CTO level            | 
-|  enc_c1                      | Encoder: C1 level            | 
-|  enc_c2                      | Encoder: C2 level            | 
-|  enc_ctc                     | Encoder: CTC level            | 
-|  enc_shutter_strobe          | Encoder: Shutter Strobe level | 
-|  enc_saturation              | Encoder: Saturation level     | 
-|  enc_diffusion               | Encoder: Diffusion level      | 
+|  enc_intensity               | Encoder: Intensity            | 
+|  enc_zoom                    | Encoder: Zoom                 | 
+|  enc_edge                    | Encoder: Edge                 | 
+|  enc_iris                    | Encoder: Iris                 | 
+|  enc_pan                     | Encoder: Pan                  | 
+|  enc_tilt                    | Encoder: Tilt                 | 
+|  enc_x_focus                 | Encoder: X Focus              | 
+|  enc_y_focus                 | Encoder: Y Focus              | 
+|  enc_z_focus                 | Encoder: Z Focus              | 
+|  enc_red                     | Encoder: Red                  | 
+|  enc_green                   | Encoder: Green                | 
+|  enc_blue                    | Encoder: Blue                 | 
+|  enc_white                   | Encoder: White                | 
+|  enc_cyan                    | Encoder: Cyan                 | 
+|  enc_magenta                 | Encoder: Magenta              | 
+|  enc_yellow                  | Encoder: Yellow               | 
+|  enc_amber                   | Encoder: Amber                | 
+|  enc_lime                    | Encoder: Lime                 | 
+|  enc_indigo                  | Encoder: Indigo               | 
+|  enc_uv                      | Encoder: UV                   | 
+|  enc_red adjust              | Encoder: Red Adj              | 
+|  enc_green adjust            | Encoder: Green Adj            | 
+|  enc_blue adjust             | Encoder: Blue Adj             | 
+|  enc_white adjust            | Encoder: White Adj            | 
+|  enc_cyan adjust             | Encoder: Cyan Adj             | 
+|  enc_magenta adjust          | Encoder: Magenta Adj          | 
+|  enc_yellow adjust           | Encoder: Yellow Adj           | 
+|  enc_amber adjust            | Encoder: Amber Adj            | 
+|  enc_lime adjust             | Encoder: Lime Adj             | 
+|  enc_indigo adjust           | Encoder: Indigo               | 
+|  enc_hue                     | Encoder: Hue                  | 
+|  enc_cto                     | Encoder: CTO                  | 
+|  enc_c1                      | Encoder: Color Select         | 
+|  enc_c2                      | Encoder: Color Mix MSpeed     | 
+|  enc_ctc                     | Encoder: CTC                  | 
+|  enc_shutter_strobe          | Encoder: Shutter Strobe       | 
+|  enc_saturation              | Encoder: Saturation           | 
+|  enc_diffusion               | Encoder: Diffusion            | 
 
 
 
