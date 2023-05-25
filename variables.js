@@ -31,7 +31,7 @@ const GetVariableDefinitions = function(self) {
 	// This approach lets us capture any/all wheel data, but the downside is that you have to figure
 	// out what wheel number you need. :( I couldn't find a list of how many there were, lets go for 50.
 	// I believe each fixture definition has their own set.
-	for (let i = 1; i <= 50; i++) {
+	for (let i = 1; i <= 100; i++) {
 		variableDefinitions.push({ variableId: `wheel_label_${i}`, name: `Wheel ${i}'s label` })
 		variableDefinitions.push({ variableId: `wheel_stringval_${i}`, name: `Wheel ${i}'s string value` })
 		variableDefinitions.push({ variableId: `wheel_cat_${i}`, name: `Wheel ${i}'s category` })

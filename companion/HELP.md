@@ -146,7 +146,7 @@ Based on initial testing, the wheels are numbered like so:
 | $(etc-eos:wheel_label_40) | Wheel 40's label | {unused?}                      |
 
 In testing, I only saw 39 reported, but if more exist the count will have to
-be adjusted.
+be adjusted. This is set at 100 as I saw other software have over 80.
 
 These parameters are reported when working with a fixture.
 You must select the fixture by typing its number on the
