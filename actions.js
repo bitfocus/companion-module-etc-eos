@@ -50,7 +50,7 @@ module.exports = function (self) {
 					id: 'osc_path',
 					type: 'textinput',
 					name: 'OSC path',
-					default: '',
+					default: '/eos/path',
 					useVariables: true,
 				},
 			],
@@ -59,6 +59,74 @@ module.exports = function (self) {
 				self.sendOsc(osc_path, [], false)
 			},
 		},
+		// From: companion-module-generic-osc
+		// https://github.com/bitfocus/companion-module-generic-osc/blob/master/osc.js
+		// Per MIT license
+		send_multiple: {
+			name: 'Custom Command (OSC) with args',
+			options: [
+				{
+					type: 'textinput',
+					label: 'OSC Path',
+					id: 'osc_path',
+					default: '/eos/path',
+					useVariables: true,
+				},
+				{
+					type: 'textinput',
+					label: 'Arguments',
+					id: 'osc_args',
+					default: '1 "test" 2.5',
+					useVariables: true,
+				},
+			],
+			callback: async (event, context) => {
+				const osc_path = await context.parseVariablesInString(event.options.osc_path)
+				const osc_argsStr = await context.parseVariablesInString(event.options.osc_args)
+				const rawArgs = (osc_argsStr + '').replace(/“/g, '"').replace(/”/g, '"').split(' ')
+
+				if (rawArgs.length) {
+					const args = []
+					for (let i = 0; i < rawArgs.length; i++) {
+						if (rawArgs[i].length == 0) continue
+						if (isNaN(rawArgs[i])) {
+							let str = rawArgs[i]
+							if (str.startsWith('"')) {
+								//a quoted string..
+								while (!rawArgs[i].endsWith('"')) {
+									i++
+									str += ' ' + rawArgs[i]
+								}
+							} else if(str.startsWith('{')) {
+								//Probably a JSON object
+								try {
+									args.push((JSON.parse(rawArgs[i])))
+								} catch (error) {
+									this.log('error', `not a JSON object ${rawArgs[i]}`)
+								}
+							}
+
+							args.push({
+								type: 's',
+								value: str.replace(/"/g, '').replace(/'/g, ''),
+							})
+						} else if (rawArgs[i].indexOf('.') > -1) {
+							args.push({
+								type: 'f',
+								value: parseFloat(rawArgs[i]),
+							})
+						} else {
+							args.push({
+								type: 'i',
+								value: parseInt(rawArgs[i]),
+							})
+						}
+					}
+					self.sendOsc(osc_path, args, false)
+				}
+			},
+		},
+		// End of code borrowed from: companion-module-generic-osc
 		blackout: {
 			name: 'Key: Blackout',
 			options: [],
