@@ -59,9 +59,11 @@ module.exports = function (self) {
 				self.sendOsc(osc_path, [], false)
 			},
 		},
-		// From: companion-module-generic-osc
+		// Modeled From: companion-module-generic-osc
 		// https://github.com/bitfocus/companion-module-generic-osc/blob/master/osc.js
+		// Copyright (c) 2018 Bitfocus AS, William Viker & Håkon Nessjøen
 		// Per MIT license
+		// Slightly tweaked
 		send_multiple: {
 			name: 'Custom Command (OSC) with args',
 			options: [

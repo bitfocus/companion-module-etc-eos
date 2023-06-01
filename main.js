@@ -21,6 +21,7 @@ class ModuleInstance extends InstanceBase {
 
 		this.EOS_OSC_PORT = 3032
 		this.lastActChan = 0
+		this.readingWheels = false
 
 		this.updateActions() // export actions
 		this.updateFeedbacks() // export feedbacks
@@ -333,6 +334,20 @@ class ModuleInstance extends InstanceBase {
 							true
 						)
 					}
+					// if we are not yet reading wheels, set flag to show we are,
+					// are set a timeout after 500ms (arbitrary) to process them
+					// into category sets. If we get a new one, clear and restart
+					// that timer. We don't know how many wheels, so this is a best
+					// guess way of knowing when to process them all into groups.
+					if ( this.readingWheels == false ) {
+						this.readingWheels = true
+						// property, intentionally no 'let'
+						wheelTimer = setTimeout( this.doCategoryWheels, 100, this )
+					} else {
+						// cancel and restart timer waiting for next value
+						cancelTimeout( wheelTimer )
+						wheelTimer = setTimeout( this.doCategoryWheels, 100, this )
+					}
 				}
 			}
 		})
@@ -352,13 +367,69 @@ class ModuleInstance extends InstanceBase {
 	}
 
 	/**
+	 * Assemble catXX_wheel_* variables after last wheel
+	 * parameter received.
+	 **/
+	 doCategoryWheels( self ) {
+		let variableDefinitions = GetVariableDefinitions()
+		let updateDefs = {}
+
+		let catWheels = []
+
+		// if we got here, we assume we are done with the batch of wheel info
+		self.readingWheels = false
+
+		variableDefinitions.forEach(function (varDef) {
+			let varName = varDef['variableId']
+			if (varName.startsWith('wheel_cat_')) {
+				let wheelCat = self.getVariableValue( varName)
+				let wmatches = varName.match(/(\d*)$/)
+				if (wmatches != null && wmatches.length == 2 ) {
+					let wheelNumber = wmatches[1]
+					if ( !catWheels[wheelCat] ) {
+						catWheels[wheelCat] = []
+					}
+					catWheels[wheelCat].push( wheelNumber )
+				}
+			}
+		}, this)
+		// Loop through categories 0-6
+		for( let i=0; i <= 6; i++ ) {
+			// nothing in this category
+			if ( ! catWheels[i] ) {
+				updateDefs[`wheel_cat${i}_count`] = 0
+			} else {
+				for( let j=0; j < 20; j++) {
+					updateDefs[`cat${i}_wheel_${j+1}_label`] = self.getVariableValue( `wheel_label_${catWheels[i][j]}`)
+					updateDefs[`cat${i}_wheel_${j+1}_stringval`] = self.getVariableValue( `wheel_stringval_${catWheels[i][j]}`)
+					updateDefs[`cat${i}_wheel_${j+1}_floatval`] = self.getVariableValue( `wheel_floatval_${catWheels[i][j]}`)
+					// set variables for each wheel in this cat
+					// set action, replace ' ' with '_' and '/' with '\' for osc command path
+					let eosCmd = self.getVariableValue( `wheel_label_${catWheels[i][j]}`)
+					if( eosCmd && eosCmd != '' ) {
+						eosCmd = eosCmd.replace( / /g, '_').replace(/\//g, '\\')
+						eosCmd = eosCmd.toLowerCase()
+					} else {
+						eosCmd = ''
+					}
+					updateDefs[`cat${i}_wheel_${j+1}_oscname`] = eosCmd
+				}
+				updateDefs[`cat${i}_wheel_count`] = catWheels[i].length
+			}
+		}
+		self.setVariableValues(updateDefs)
+	 }
+
+	/**
 	 * Reset our internal variables
 	 */
 	emptyEncVariables() {
 		let variableDefinitions = GetVariableDefinitions()
 		let updateDefs = {}
 		variableDefinitions.forEach(function (varDef) {
-			if (varDef['variableId'].startsWith('enc_')) {
+			if (varDef['variableId'].startsWith('enc_')
+					|| varDef['variableId'].startsWith('wheel_')
+					|| /^cat\d_/.test(varDef['variableId']) ) {
 				updateDefs[varDef['variableId']] = ''
 			}
 		}, this)
