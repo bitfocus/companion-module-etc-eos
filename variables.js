@@ -38,6 +38,17 @@ const GetVariableDefinitions = function(self) {
 		variableDefinitions.push({ variableId: `wheel_floatval_${i}`, name: `Wheel ${i}'s float value` })
 	}
 
+	// Encoder Wheels grouped by categories... Up to 20 per category, 7 categories, 0-6
+	for ( let i=0; i<=6; i++ ){
+		variableDefinitions.push({ variableId: `cat${i}_wheel_count`, name: `Count of encoders in category ${i}`})
+		for ( let j=1; j<=20; j++ ) {
+			variableDefinitions.push({ variableId: `cat${i}_wheel_${j}_label`, name: `Encoders category ${i} Wheel ${j} Label`})
+			variableDefinitions.push({ variableId: `cat${i}_wheel_${j}_stringval`, name: `Encoders category ${i} Wheel ${j} String Value`})
+			variableDefinitions.push({ variableId: `cat${i}_wheel_${j}_floatval`, name: `Encoders category ${i} Wheel ${j} Float Value`})
+			variableDefinitions.push({ variableId: `cat${i}_wheel_${j}_oscname`, name: `Encoders category ${i} Wheel ${j} param name`})
+		}
+	}
+
 	// There are 6 soft keys, and 6 alternates (exposed with {More SK}).
 	for (let i = 1; i <= 12; i++) {
 		variableDefinitions.push({ variableId: `softkey_label_${i}`, name: `Soft key ${i}'s label` })
