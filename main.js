@@ -579,10 +579,9 @@ class ModuleInstance extends InstanceBase {
 	setIntensity(prefix, id, value) {
 		let suffix = ''
 		let arg = []
-
 		if (!isNaN(value)) {
 			// Numeric value as a percentage
-			if (action.action === 'sub_intensity') {
+			if (prefix == 'sub') {
 				// Value must be a float from 0.0 to 1.0 for subs.
 				arg = [{ type: 'f', value: Math.min(100, parseFloat(value)) / 100.0 }]
 			} else {
