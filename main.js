@@ -19,8 +19,8 @@ class ModuleInstance extends InstanceBase {
 		this.instanceState = {}
 		this.debugToLogger = true
 
+		this.lastActChan = -1
 		this.eos_port = this.config.use_slip ? 3037 : 3032
-		this.lastActChan = 0
 		this.readingWheels = false
 
 		this.updateActions() // export actions
@@ -239,7 +239,7 @@ class ModuleInstance extends InstanceBase {
 		// const enc_wheel      = /^\/eos\/out\/active\/wheel\/(\d+),\s*(\w+)\s*\[(\w+)\]\(s\).\s+(\d+)\(i\),\s*([\d.]*)\(f\)$/
 		const enc_wheel = /^\/eos\/out\/active\/wheel\/(\d+)/
 
-		this.oscSocket.on('message', (message) => {
+		this.oscSocket.on('message', (message, self ) => {
 			if (this.debugToLogger) {
 				this.log('debug', `Eos OSC message args: ${JSON.stringify(message.args)}`)
 				this.log('debug', `Eos OSC message: ${message.address}`)
@@ -315,7 +315,8 @@ class ModuleInstance extends InstanceBase {
 				// This may be a better place to reset our parameter data variables
 				let chantext = message.args[0].value
 				let chanarg_matches = chantext.match(/^(\d+)/)
-				if (chanarg_matches.length > 0) {
+
+				if (chanarg_matches != null && chanarg_matches.length > 1) {
 					let actChan = chanarg_matches[1]
 					// if channel changed, we need to get full set of wheel data
 					if (actChan != this.lastActChan) {
@@ -323,6 +324,12 @@ class ModuleInstance extends InstanceBase {
 						this.requestFullState()
 						this.lastActChan = actChan
 					}
+				} else if ( this.lastActChan != 0 ) {
+					// No channel active, clear out encoders, set lastActChan
+					// to zero so we don't keep looping on this. Initially set to -1
+					this.emptyEncVariables()
+					this.requestFullState()
+					this.lastActChan = 0
 				}
 			} else if ((matches = message.address.match(enc_wheel))) {
 				// set variables/state for wheel values
@@ -330,6 +337,7 @@ class ModuleInstance extends InstanceBase {
 
 				if (wheel_num >= 1) {
 					// this.log('debug', '***** wheel message: ' + JSON.stringify(message))
+					let wheelTimer
 					let wheel_label = message.args[0].value
 					let wheel_stringval = '0'
 					let wheel_cat = message.args[1].value || 0
@@ -379,7 +387,8 @@ class ModuleInstance extends InstanceBase {
 						wheelTimer = setTimeout( this.doCategoryWheels, 100, this )
 					} else {
 						// cancel and restart timer waiting for next value
-						cancelTimeout( wheelTimer )
+						clearTimeout( wheelTimer )
+						// cancelTimeout( wheelTimer )
 						wheelTimer = setTimeout( this.doCategoryWheels, 100, this )
 					}
 				}
