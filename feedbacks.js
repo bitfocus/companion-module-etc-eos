@@ -64,6 +64,37 @@ module.exports = function (self) {
 				)
 			},
 		},
+		previous_cue: {
+			type: 'boolean',
+			name: 'When cue is the previous cue',
+			description: "Changes the button's style when this cue is previous.",
+			defaultStyle: {
+				bgcolor: combineRgb(51, 102, 0),
+				color: combineRgb(255, 255, 255),
+			},
+			options: [
+				{
+					id: 'list',
+					type: 'textinput',
+					label: 'Cue List',
+					default: '1',
+					regex: Regex.NUMBER,
+				},
+				{
+					id: 'list',
+					type: 'textinput',
+					label: 'Cue Number',
+					default: '1',
+					regex: Regex.FLOAT_OR_INT,
+				},
+			],
+			callback: (feedback) => {
+				return (
+					feedback.options.list === self.instanceState['cue_previous_list'] &&
+					feedback.options.number === self.instanceState['cue_previous_num']
+				)
+			},
+		},
 		connected: {
 			type: 'boolean',
 			name: 'When connection to console changes',

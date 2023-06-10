@@ -19,7 +19,7 @@ class ModuleInstance extends InstanceBase {
 		this.instanceState = {}
 		this.debugToLogger = true
 
-		this.EOS_OSC_PORT = 3032
+		this.eos_port = this.config.use_slip ? 3037 : 3032
 		this.lastActChan = 0
 		this.readingWheels = false
 
@@ -28,7 +28,7 @@ class ModuleInstance extends InstanceBase {
 		this.updateVariableDefinitions() // export variable definitions
 		this.updatePresets() // export presets
 
-		this.oscSocket = this.getOsc10Socket(this.config.host, this.EOS_OSC_PORT)
+		this.oscSocket = this.getOsc10Socket(this.config.host, this.eos_port )
 		this.setOscSocketListeners()
 		this.startReconnectTimer()
 	}
@@ -49,11 +49,14 @@ class ModuleInstance extends InstanceBase {
 	async configUpdated(config) {
 		let currentHost = this.config.host
 		let currentUserId = this.config.user_id
-
+		let currentUseSlip = this.config.use_slip
+		
 		this.config = config
 
-		if (currentHost !== this.config.host || currentUserId !== this.config.user_id) {
+		if (currentHost !== this.config.host || currentUserId !== this.config.user_id
+			|| currentUseSlip !== this.config.use_slip ) {
 			this.closeOscSocket()
+			this.eos_port = this.config.use_slip ? 3037 : 3032
 			await this.init(config)
 		}
 	}
@@ -75,6 +78,24 @@ class ModuleInstance extends InstanceBase {
 				default: 1,
 				width: 4,
 				regex: '/^(-1|0|\\d+)$/',
+			},
+/*
+			{
+				type: 'number',
+				id: 'eos_port',
+				label: 'EOS Port',
+				default: 3032,
+				min: 1,
+				max: 65535,
+				required: true,
+			},
+*/
+			{
+				type: 'checkbox',
+				id: 'use_slip',
+				label: 'Use TCP SLIP',
+				default: false,
+				required: true,
 			},
 		]
 	}
@@ -151,7 +172,7 @@ class ModuleInstance extends InstanceBase {
 			}
 
 			// Re-open the TCP socket
-			this.oscSocket.socket.connect(this.EOS_OSC_PORT, this.config.host)
+			this.oscSocket.socket.connect(this.eos_port, this.config.host)
 		}, 5000)
 	}
 
@@ -179,7 +200,7 @@ class ModuleInstance extends InstanceBase {
 		let oscTcp = new OSC10.TCPSocketPort({
 			address: address,
 			port: port,
-			useSLIP: false,
+			useSLIP: this.config.use_slip,
 			metadata: true,
 		})
 
@@ -205,6 +226,8 @@ class ModuleInstance extends InstanceBase {
 		const cueActiveText = '/eos/out/active/cue/text'
 		const cuePending = /^\/eos\/out\/pending\/cue\/([\d\.]+)\/([\d\.]+)$/
 		const cuePendingText = '/eos/out/pending/cue/text'
+		const cuePrevious = /^\/eos\/out\/previous\/cue\/([\d\.]+)\/([\d\.]+)$/
+		const cuePreviousText = '/eos/out/previous/cue/text'
 		const showName = '/eos/out/show/name'
 		const showLoaded = '/eos/out/event/show/loaded'
 		const showCleared = '/eos/out/event/show/cleared'
@@ -246,6 +269,17 @@ class ModuleInstance extends InstanceBase {
 				this.checkFeedbacks('pending_cue')
 			} else if (message.address === cuePendingText) {
 				this.parseCueName('pending', message.args[0].value)
+			} else if ((matches = message.address.match(cuePrevious))) {
+				this.setInstanceStates(
+					{
+						cue_previous_list: matches[1],
+						cue_previous_num: matches[2],
+					},
+					true
+				)
+				this.checkFeedbacks('previous_cue')
+			} else if (message.address === cuePreviousText) {
+				this.parseCueName('previous', message.args[0].value)
 			} else if (message.address === showName && message.args.length === 1 && message.args[0].type === 's') {
 				this.setInstanceStates(
 					{
@@ -302,7 +336,7 @@ class ModuleInstance extends InstanceBase {
 					let wheel_floatval = message.args[2].value
 					if (wheel_floatval != null) {
 						wheel_floatval = Number(wheel_floatval)
-						wheel_floatval = wheel_floatval.toFixed(2)
+						wheel_floatval = wheel_floatval.toFixed(3)
 					} else {
 						wheel_floatval = 0.0
 					}
