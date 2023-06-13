@@ -19,8 +19,8 @@ class ModuleInstance extends InstanceBase {
 		this.instanceState = {}
 		this.debugToLogger = true
 
-		this.EOS_OSC_PORT = 3032
-		this.lastActChan = 0
+		this.lastActChan = -1
+		this.eos_port = this.config.use_slip ? 3037 : 3032
 		this.readingWheels = false
 
 		this.updateActions() // export actions
@@ -28,7 +28,7 @@ class ModuleInstance extends InstanceBase {
 		this.updateVariableDefinitions() // export variable definitions
 		this.updatePresets() // export presets
 
-		this.oscSocket = this.getOsc10Socket(this.config.host, this.EOS_OSC_PORT)
+		this.oscSocket = this.getOsc10Socket(this.config.host, this.eos_port )
 		this.setOscSocketListeners()
 		this.startReconnectTimer()
 	}
@@ -49,11 +49,14 @@ class ModuleInstance extends InstanceBase {
 	async configUpdated(config) {
 		let currentHost = this.config.host
 		let currentUserId = this.config.user_id
-
+		let currentUseSlip = this.config.use_slip
+		
 		this.config = config
 
-		if (currentHost !== this.config.host || currentUserId !== this.config.user_id) {
+		if (currentHost !== this.config.host || currentUserId !== this.config.user_id
+			|| currentUseSlip !== this.config.use_slip ) {
 			this.closeOscSocket()
+			this.eos_port = this.config.use_slip ? 3037 : 3032
 			await this.init(config)
 		}
 	}
@@ -75,6 +78,24 @@ class ModuleInstance extends InstanceBase {
 				default: 1,
 				width: 4,
 				regex: '/^(-1|0|\\d+)$/',
+			},
+/*
+			{
+				type: 'number',
+				id: 'eos_port',
+				label: 'EOS Port',
+				default: 3032,
+				min: 1,
+				max: 65535,
+				required: true,
+			},
+*/
+			{
+				type: 'checkbox',
+				id: 'use_slip',
+				label: 'Use TCP SLIP',
+				default: false,
+				required: true,
 			},
 		]
 	}
@@ -151,7 +172,7 @@ class ModuleInstance extends InstanceBase {
 			}
 
 			// Re-open the TCP socket
-			this.oscSocket.socket.connect(this.EOS_OSC_PORT, this.config.host)
+			this.oscSocket.socket.connect(this.eos_port, this.config.host)
 		}, 5000)
 	}
 
@@ -179,7 +200,7 @@ class ModuleInstance extends InstanceBase {
 		let oscTcp = new OSC10.TCPSocketPort({
 			address: address,
 			port: port,
-			useSLIP: false,
+			useSLIP: this.config.use_slip,
 			metadata: true,
 		})
 
@@ -205,6 +226,8 @@ class ModuleInstance extends InstanceBase {
 		const cueActiveText = '/eos/out/active/cue/text'
 		const cuePending = /^\/eos\/out\/pending\/cue\/([\d\.]+)\/([\d\.]+)$/
 		const cuePendingText = '/eos/out/pending/cue/text'
+		const cuePrevious = /^\/eos\/out\/previous\/cue\/([\d\.]+)\/([\d\.]+)$/
+		const cuePreviousText = '/eos/out/previous/cue/text'
 		const showName = '/eos/out/show/name'
 		const showLoaded = '/eos/out/event/show/loaded'
 		const showCleared = '/eos/out/event/show/cleared'
@@ -216,7 +239,7 @@ class ModuleInstance extends InstanceBase {
 		// const enc_wheel      = /^\/eos\/out\/active\/wheel\/(\d+),\s*(\w+)\s*\[(\w+)\]\(s\).\s+(\d+)\(i\),\s*([\d.]*)\(f\)$/
 		const enc_wheel = /^\/eos\/out\/active\/wheel\/(\d+)/
 
-		this.oscSocket.on('message', (message) => {
+		this.oscSocket.on('message', (message, self ) => {
 			if (this.debugToLogger) {
 				this.log('debug', `Eos OSC message args: ${JSON.stringify(message.args)}`)
 				this.log('debug', `Eos OSC message: ${message.address}`)
@@ -246,6 +269,17 @@ class ModuleInstance extends InstanceBase {
 				this.checkFeedbacks('pending_cue')
 			} else if (message.address === cuePendingText) {
 				this.parseCueName('pending', message.args[0].value)
+			} else if ((matches = message.address.match(cuePrevious))) {
+				this.setInstanceStates(
+					{
+						cue_previous_list: matches[1],
+						cue_previous_num: matches[2],
+					},
+					true
+				)
+				this.checkFeedbacks('previous_cue')
+			} else if (message.address === cuePreviousText) {
+				this.parseCueName('previous', message.args[0].value)
 			} else if (message.address === showName && message.args.length === 1 && message.args[0].type === 's') {
 				this.setInstanceStates(
 					{
@@ -281,7 +315,8 @@ class ModuleInstance extends InstanceBase {
 				// This may be a better place to reset our parameter data variables
 				let chantext = message.args[0].value
 				let chanarg_matches = chantext.match(/^(\d+)/)
-				if (chanarg_matches.length > 0) {
+
+				if (chanarg_matches != null && chanarg_matches.length > 1) {
 					let actChan = chanarg_matches[1]
 					// if channel changed, we need to get full set of wheel data
 					if (actChan != this.lastActChan) {
@@ -289,6 +324,12 @@ class ModuleInstance extends InstanceBase {
 						this.requestFullState()
 						this.lastActChan = actChan
 					}
+				} else if ( this.lastActChan != 0 ) {
+					// No channel active, clear out encoders, set lastActChan
+					// to zero so we don't keep looping on this. Initially set to -1
+					this.emptyEncVariables()
+					this.requestFullState()
+					this.lastActChan = 0
 				}
 			} else if ((matches = message.address.match(enc_wheel))) {
 				// set variables/state for wheel values
@@ -296,13 +337,14 @@ class ModuleInstance extends InstanceBase {
 
 				if (wheel_num >= 1) {
 					// this.log('debug', '***** wheel message: ' + JSON.stringify(message))
+					let wheelTimer
 					let wheel_label = message.args[0].value
 					let wheel_stringval = '0'
 					let wheel_cat = message.args[1].value || 0
 					let wheel_floatval = message.args[2].value
 					if (wheel_floatval != null) {
 						wheel_floatval = Number(wheel_floatval)
-						wheel_floatval = wheel_floatval.toFixed(2)
+						wheel_floatval = wheel_floatval.toFixed(3)
 					} else {
 						wheel_floatval = 0.0
 					}
@@ -345,7 +387,8 @@ class ModuleInstance extends InstanceBase {
 						wheelTimer = setTimeout( this.doCategoryWheels, 100, this )
 					} else {
 						// cancel and restart timer waiting for next value
-						cancelTimeout( wheelTimer )
+						clearTimeout( wheelTimer )
+						// cancelTimeout( wheelTimer )
 						wheelTimer = setTimeout( this.doCategoryWheels, 100, this )
 					}
 				}
@@ -536,10 +579,9 @@ class ModuleInstance extends InstanceBase {
 	setIntensity(prefix, id, value) {
 		let suffix = ''
 		let arg = []
-
 		if (!isNaN(value)) {
 			// Numeric value as a percentage
-			if (action.action === 'sub_intensity') {
+			if (prefix == 'sub') {
 				// Value must be a float from 0.0 to 1.0 for subs.
 				arg = [{ type: 'f', value: Math.min(100, parseFloat(value)) / 100.0 }]
 			} else {

@@ -14,6 +14,11 @@ const GetVariableDefinitions = function(self) {
 		{ variableId: 'cue_pending_label',			name: 'The pending cue label' },
 		{ variableId: 'cue_pending_duration',		name: 'The pending cue duration in seconds' },
 
+		{ variableId: 'cue_previous_list',			name: 'The previous cue list number' },
+		{ variableId: 'cue_previous_num',			name: 'The previous cue number' },
+		{ variableId: 'cue_previous_label',			name: 'The previous cue label' },
+		{ variableId: 'cue_previous_duration',		name: 'The previous cue duration in seconds' },
+
 		{ variableId: 'cmd',						name: 'The current command line output for the user ' },
 		{ variableId: 'show_name',					name: 'The name of the show' },
 
