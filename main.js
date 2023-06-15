@@ -22,6 +22,12 @@ class ModuleInstance extends InstanceBase {
 		this.lastActChan = -1
 		this.eos_port = this.config.use_slip ? 3037 : 3032
 		this.readingWheels = false
+		
+		// Wheel information as module only variables, not exposed
+		this.wpc = 20
+		this.wheelsPerCategory = 20
+		this.wheels = []
+		this.emptyWheelData() // clear out encoder wheel values
 
 		this.updateActions() // export actions
 		this.updateFeedbacks() // export feedbacks
@@ -33,6 +39,17 @@ class ModuleInstance extends InstanceBase {
 		this.startReconnectTimer()
 	}
 
+	// Empty wheel data
+	emptyWheelData() {
+		for (let i = 1; i <= 100; i++) {
+			this.wheels[i] = {}
+			this.wheels[i].label = ''
+			this.wheels[i].stringval = ''
+			this.wheels[i].cat = ''
+			this.wheels[i].floatval = ''
+		}
+	}
+	
 	// When module gets deleted
 	async destroy() {
 		// Clear the reconnect timer if it exists.
@@ -226,8 +243,10 @@ class ModuleInstance extends InstanceBase {
 		const cueActiveText = '/eos/out/active/cue/text'
 		const cuePending = /^\/eos\/out\/pending\/cue\/([\d\.]+)\/([\d\.]+)$/
 		const cuePendingText = '/eos/out/pending/cue/text'
+		const cuePendingOut = '/eos/out/pending/cue'
 		const cuePrevious = /^\/eos\/out\/previous\/cue\/([\d\.]+)\/([\d\.]+)$/
 		const cuePreviousText = '/eos/out/previous/cue/text'
+		const cuePreviousOut = '/eos/out/previous/cue'
 		const showName = '/eos/out/show/name'
 		const showLoaded = '/eos/out/event/show/loaded'
 		const showCleared = '/eos/out/event/show/cleared'
@@ -247,7 +266,7 @@ class ModuleInstance extends InstanceBase {
 
 			let matches
 
-			if ((matches = message.address.match(cueActive))) {
+			if (matches = message.address.match(cueActive)) {
 				this.setInstanceStates(
 					{
 						cue_active_list: matches[1],
@@ -267,6 +286,14 @@ class ModuleInstance extends InstanceBase {
 					true
 				)
 				this.checkFeedbacks('pending_cue')
+			} else if (message.address === cuePendingOut && message.args.length == 0 ) {
+				this.setInstanceStates(
+					{
+					cue_pending_list: '',
+					cue_pending_num: '',
+					},
+					true
+				)
 			} else if (message.address === cuePendingText) {
 				this.parseCueName('pending', message.args[0].value)
 			} else if ((matches = message.address.match(cuePrevious))) {
@@ -278,6 +305,14 @@ class ModuleInstance extends InstanceBase {
 					true
 				)
 				this.checkFeedbacks('previous_cue')
+			} else if (message.address === cuePreviousOut && message.args.length == 0 ) {
+				this.setInstanceStates(
+					{
+					cue_previous_list: '',
+					cue_previous_num: '',
+					},
+					true
+				)
 			} else if (message.address === cuePreviousText) {
 				this.parseCueName('previous', message.args[0].value)
 			} else if (message.address === showName && message.args.length === 1 && message.args[0].type === 's') {
@@ -355,6 +390,13 @@ class ModuleInstance extends InstanceBase {
 						wheel_label = wmatches[1].trimEnd()
 						wheel_stringval = wmatches[2]
 					}
+					// Update private wheel data
+					this.wheels[wheel_num].label = wheel_label
+					this.wheels[wheel_num].stringval = wheel_stringval
+					this.wheels[wheel_num].cat = wheel_cat
+					this.wheels[wheel_num].floatval = wheel_floatval
+					/* Previous exposed as custom variables - deprecated */
+					/*
 					this.setInstanceStates(
 						{
 							[`wheel_label_${wheel_num}`]: wheel_label,
@@ -364,6 +406,7 @@ class ModuleInstance extends InstanceBase {
 						},
 						true
 					)
+					*/
 					// Set individual wheel params we care about specifically
 					// as the wheel numbers can change.
 					let distinctparam = this.getDistinctParamForWheelLabel(wheel_label)
@@ -414,14 +457,18 @@ class ModuleInstance extends InstanceBase {
 	 * parameter received.
 	 **/
 	 doCategoryWheels( self ) {
-		let variableDefinitions = GetVariableDefinitions()
+		let variableDefinitions = GetVariableDefinitions( self )
 		let updateDefs = {}
-
 		let catWheels = []
 
 		// if we got here, we assume we are done with the batch of wheel info
 		self.readingWheels = false
 
+		/*
+		   When variables were exposed, this was done to examine the
+		   values set for the wheels to set the category wheels data
+		*/
+		/*
 		variableDefinitions.forEach(function (varDef) {
 			let varName = varDef['variableId']
 			if (varName.startsWith('wheel_cat_')) {
@@ -436,19 +483,34 @@ class ModuleInstance extends InstanceBase {
 				}
 			}
 		}, this)
+		*/
+		/* duplicate the above,  but using the module private wheels data */
+		self.wheels.forEach ( function (wheelobj, index, arr, self ) {
+			if ( ! catWheels[ wheelobj.cat ] ) {
+				catWheels[ wheelobj.cat ] = []
+			}
+			catWheels[ wheelobj.cat ].push( index )
+		})
 		// Loop through categories 0-6
 		for( let i=0; i <= 6; i++ ) {
 			// nothing in this category
 			if ( ! catWheels[i] ) {
 				updateDefs[`wheel_cat${i}_count`] = 0
 			} else {
-				for( let j=0; j < 20; j++) {
-					updateDefs[`cat${i}_wheel_${j+1}_label`] = self.getVariableValue( `wheel_label_${catWheels[i][j]}`)
-					updateDefs[`cat${i}_wheel_${j+1}_stringval`] = self.getVariableValue( `wheel_stringval_${catWheels[i][j]}`)
-					updateDefs[`cat${i}_wheel_${j+1}_floatval`] = self.getVariableValue( `wheel_floatval_${catWheels[i][j]}`)
+				// for( let j=0; j < this.wheelsPerCategory; j++) {
+				for ( let j=0; j < Math.min( catWheels[i].length, self.wheelsPerCategory ); j++ ) {
+					// used for previous wheel_ variables - deprecated
+					// updateDefs[`cat${i}_wheel_${j+1}_label`] = self.getVariableValue( `wheel_label_${catWheels[i][j]}`)
+					// updateDefs[`cat${i}_wheel_${j+1}_stringval`] = self.getVariableValue( `wheel_stringval_${catWheels[i][j]}`)
+					// updateDefs[`cat${i}_wheel_${j+1}_floatval`] = self.getVariableValue( `wheel_floatval_${catWheels[i][j]}`)
+					// using module private wheels data
+					updateDefs[`cat${i}_wheel_${j+1}_label`] = self.wheels[ catWheels[i][j] ].label
+					updateDefs[`cat${i}_wheel_${j+1}_stringval`] = self.wheels[ catWheels[i][j] ].stringval
+					updateDefs[`cat${i}_wheel_${j+1}_floatval`] = self.wheels[ catWheels[i][j]].floatval
 					// set variables for each wheel in this cat
 					// set action, replace ' ' with '_' and '/' with '\' for osc command path
-					let eosCmd = self.getVariableValue( `wheel_label_${catWheels[i][j]}`)
+					// let eosCmd = self.getVariableValue( `wheel_label_${catWheels[i][j]}`)
+					let eosCmd = self.wheels[ catWheels[i][j] ].label
 					if( eosCmd && eosCmd != '' ) {
 						eosCmd = eosCmd.replace( / /g, '_').replace(/\//g, '\\')
 						eosCmd = eosCmd.toLowerCase()
@@ -467,16 +529,17 @@ class ModuleInstance extends InstanceBase {
 	 * Reset our internal variables
 	 */
 	emptyEncVariables() {
-		let variableDefinitions = GetVariableDefinitions()
+		let variableDefinitions = GetVariableDefinitions( this )
 		let updateDefs = {}
 		variableDefinitions.forEach(function (varDef) {
 			if (varDef['variableId'].startsWith('enc_')
-					|| varDef['variableId'].startsWith('wheel_')
+					// || varDef['variableId'].startsWith('wheel_') // deprecated
 					|| /^cat\d_/.test(varDef['variableId']) ) {
 				updateDefs[varDef['variableId']] = ''
 			}
 		}, this)
 		this.setVariableValues(updateDefs)
+		this.emptyWheelData()
 	}
 
 	/**
@@ -518,6 +581,8 @@ class ModuleInstance extends InstanceBase {
 		// let matches = cueName.match(/^(?<CUE_NUMBER>[\d\.]+)( (?<LABEL>.*?))? (?<DURATION>[\d\.]+)( (?<INTENSITY>[\d\.]+%))?$/)
 		//
 		// Fixed to accommodate CUE NUMBER of list/cue, as in 1/1.
+		//
+		// If the CUE value is " 0.0" then reset active cue list/number
 		const cuematch =
 			/^(?<CUE_NUMBER>[\d\.]+\/[\d\.]+|[\d\.]+)?(?<CUEWLIST>\/[\d\.]+)?( (?<LABEL>.*?))? (?<DURATION>[\d\.]+)( (?<INTENSITY>[\d\.]+%))?$/
 		let matches = cueName.match(cuematch)
@@ -539,6 +604,20 @@ class ModuleInstance extends InstanceBase {
 			this.setInstanceStates(
 				{
 					[`cue_${type}_label`]: cueName,
+				},
+				true
+			)
+		}
+		// Clear out when active cue is no longer activve
+		if ( "active" == type &&
+		       ( " 0.0 " == cueName.substring(0,5)
+				||
+				"" == cueName )
+	    	) {
+			this.setInstanceStates(
+				{
+				cue_active_list: '',
+				cue_active_num: '',
 				},
 				true
 			)

@@ -91,21 +91,6 @@ A list of the available variables is listed on the module's config page, and is 
 
 _Soft keys 7-12 are the alternates available when you toggle the {More SK} button._
 
-## Wheels - More variables
-
-There are also a set of variables to track the status of the encoder wheels.
-Each wheel has the following variables:
-
-| Variable                     | Description                   | Example value |
-| ---------------------------- | ----------------------------- | ------------- |
-| $(etc-eos:wheel_label_X)     | Wheel X's label               | Function      |
-| $(etc-eos:wheel_stringval_X) | Wheel X's string value        | String Format |
-| $(etc-eos:wheel_cat_X)       | Wheel X's function category   | Category      |
-| $(etc-eos:wheel_floatval_X)  | Wheel X's float numeric value | 2 decimals    |
-
-In testing, I only saw 39 reported, but if more exist the count will have to
-be adjusted. This is set at 100 as I saw other software have over 80.
-
 ## Wheels - Distinct Parameters
 
 These parameters are reported when working with a fixture. You must select the fixture by typing its number on the command line. If using next/last or other methods the EOS software does not consistently send updates on the values.
