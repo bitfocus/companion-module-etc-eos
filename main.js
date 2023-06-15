@@ -395,18 +395,6 @@ class ModuleInstance extends InstanceBase {
 					this.wheels[wheel_num].stringval = wheel_stringval
 					this.wheels[wheel_num].cat = wheel_cat
 					this.wheels[wheel_num].floatval = wheel_floatval
-					/* Previous exposed as custom variables - deprecated */
-					/*
-					this.setInstanceStates(
-						{
-							[`wheel_label_${wheel_num}`]: wheel_label,
-							[`wheel_stringval_${wheel_num}`]: wheel_stringval,
-							[`wheel_cat_${wheel_num}`]: wheel_cat,
-							[`wheel_floatval_${wheel_num}`]: wheel_floatval,
-						},
-						true
-					)
-					*/
 					// Set individual wheel params we care about specifically
 					// as the wheel numbers can change.
 					let distinctparam = this.getDistinctParamForWheelLabel(wheel_label)
@@ -464,27 +452,6 @@ class ModuleInstance extends InstanceBase {
 		// if we got here, we assume we are done with the batch of wheel info
 		self.readingWheels = false
 
-		/*
-		   When variables were exposed, this was done to examine the
-		   values set for the wheels to set the category wheels data
-		*/
-		/*
-		variableDefinitions.forEach(function (varDef) {
-			let varName = varDef['variableId']
-			if (varName.startsWith('wheel_cat_')) {
-				let wheelCat = self.getVariableValue( varName)
-				let wmatches = varName.match(/(\d*)$/)
-				if (wmatches != null && wmatches.length == 2 ) {
-					let wheelNumber = wmatches[1]
-					if ( !catWheels[wheelCat] ) {
-						catWheels[wheelCat] = []
-					}
-					catWheels[wheelCat].push( wheelNumber )
-				}
-			}
-		}, this)
-		*/
-		/* duplicate the above,  but using the module private wheels data */
 		self.wheels.forEach ( function (wheelobj, index, arr, self ) {
 			if ( ! catWheels[ wheelobj.cat ] ) {
 				catWheels[ wheelobj.cat ] = []
@@ -499,17 +466,9 @@ class ModuleInstance extends InstanceBase {
 			} else {
 				// for( let j=0; j < this.wheelsPerCategory; j++) {
 				for ( let j=0; j < Math.min( catWheels[i].length, self.wheelsPerCategory ); j++ ) {
-					// used for previous wheel_ variables - deprecated
-					// updateDefs[`cat${i}_wheel_${j+1}_label`] = self.getVariableValue( `wheel_label_${catWheels[i][j]}`)
-					// updateDefs[`cat${i}_wheel_${j+1}_stringval`] = self.getVariableValue( `wheel_stringval_${catWheels[i][j]}`)
-					// updateDefs[`cat${i}_wheel_${j+1}_floatval`] = self.getVariableValue( `wheel_floatval_${catWheels[i][j]}`)
-					// using module private wheels data
 					updateDefs[`cat${i}_wheel_${j+1}_label`] = self.wheels[ catWheels[i][j] ].label
 					updateDefs[`cat${i}_wheel_${j+1}_stringval`] = self.wheels[ catWheels[i][j] ].stringval
 					updateDefs[`cat${i}_wheel_${j+1}_floatval`] = self.wheels[ catWheels[i][j]].floatval
-					// set variables for each wheel in this cat
-					// set action, replace ' ' with '_' and '/' with '\' for osc command path
-					// let eosCmd = self.getVariableValue( `wheel_label_${catWheels[i][j]}`)
 					let eosCmd = self.wheels[ catWheels[i][j] ].label
 					if( eosCmd && eosCmd != '' ) {
 						eosCmd = eosCmd.replace( / /g, '_').replace(/\//g, '\\')
