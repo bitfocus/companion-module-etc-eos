@@ -21,8 +21,6 @@ const GetVariableDefinitions = function(self) {
 
 		{ variableId: 'cmd',						name: 'The current command line output for the user ' },
 		{ variableId: 'show_name',					name: 'The name of the show' },
-
-		{ variableId: 'cue_pending',				name: 'The pending cue ' },		
 	]
 
 	/* we can capture these params/attributes from related wheel updates as both string and float */
@@ -33,20 +31,11 @@ const GetVariableDefinitions = function(self) {
 		variableDefinitions.push({ variableId: `${param}_floatval`, name: `Encoder: ${label} (float)` })
 	})
 
-	// This approach lets us capture any/all wheel data, but the downside is that you have to figure
-	// out what wheel number you need. :( I couldn't find a list of how many there were, lets go for 50.
-	// I believe each fixture definition has their own set.
-	for (let i = 1; i <= 100; i++) {
-		variableDefinitions.push({ variableId: `wheel_label_${i}`, name: `Wheel ${i}'s label` })
-		variableDefinitions.push({ variableId: `wheel_stringval_${i}`, name: `Wheel ${i}'s string value` })
-		variableDefinitions.push({ variableId: `wheel_cat_${i}`, name: `Wheel ${i}'s category` })
-		variableDefinitions.push({ variableId: `wheel_floatval_${i}`, name: `Wheel ${i}'s float value` })
-	}
-
-	// Encoder Wheels grouped by categories... Up to 20 per category, 7 categories, 0-6
-	for ( let i=0; i<=6; i++ ){
+	// Encoder Wheels grouped by categories... Up to ${wheelsPerCategory} wheels per category, 7 categories, 0-6
+	for ( let i=0; i<=6; i++ ) {
 		variableDefinitions.push({ variableId: `cat${i}_wheel_count`, name: `Count of encoders in category ${i}`})
-		for ( let j=1; j<=20; j++ ) {
+
+		for ( let j=1; j <= self.wheelsPerCategory; j++ ) {
 			variableDefinitions.push({ variableId: `cat${i}_wheel_${j}_label`, name: `Encoders category ${i} Wheel ${j} Label`})
 			variableDefinitions.push({ variableId: `cat${i}_wheel_${j}_stringval`, name: `Encoders category ${i} Wheel ${j} String Value`})
 			variableDefinitions.push({ variableId: `cat${i}_wheel_${j}_floatval`, name: `Encoders category ${i} Wheel ${j} Float Value`})
@@ -62,7 +51,7 @@ const GetVariableDefinitions = function(self) {
 }
 
 const UpdateVariableDefinitions = function(self) {
-	let variableDefinitions = GetVariableDefinitions(this)
+	let variableDefinitions = GetVariableDefinitions(self)
 
 	self.setVariableDefinitions( variableDefinitions )
 
