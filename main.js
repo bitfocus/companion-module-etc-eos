@@ -511,7 +511,7 @@ class ModuleInstance extends InstanceBase {
 		this.sendOsc('/eos/reset', [], false)
 
 		// Switch to the correct user_id.
-		this.sendOsc(`/eos/user=${this.config.user_id}`, [], false)
+		this.sendOsc('/eos/user', [ { type: 'i', value: this.config.user_id } ], false)
 	}
 
 	/**
