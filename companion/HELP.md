@@ -6,15 +6,15 @@ Exit out of your console and enter the Eos Shell (Eos Configuration Utility).
 
 Open **Settings** and click on **Network**. Make a note of your console's IP address.
 
-![console-ip](images/console-ip.jpg)
+![console-ip](./images/console-ip.jpg)
 
 Scroll down to the **Interface Protocols** section and make sure the OSC TCP Format is **TCP format for OSC 1.0 (packet length headers)** (the default option). Save your changes by pressing the **Accept** button, then launch your console.
 
-![osc-1.0](images/osc-1.0.jpg)
+![osc-1.0](./images/osc-1.0.jpg)
 
 Once your console has started, make sure the **OSC RX** and **OSC TX** options are enabled (they are by default). The location may vary depending on your console's version, but it should be somewhere close to **Setup > System > Show Control > OSC**.
 
-![enable-osc](images/enable-osc.jpg)
+![enable-osc](./images/enable-osc.jpg)
 
 _Previous versions of this module asked you to change the OSC [UDP] RX Port. This is no longer required. You should reset the field back to `0` if you're not using it for another purpose._
 
