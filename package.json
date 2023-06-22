@@ -1,6 +1,6 @@
 {
 	"name": "etc-eos",
-	"version": "2.0.6",
+	"version": "2.0.7",
 	"main": "main.js",
 	"scripts": {
 		"format": "prettier -w .",
