@@ -19,7 +19,7 @@ module.exports = function (self) {
 					regex: Regex.NUMBER,
 				},
 				{
-					id: 'list',
+					id: 'number',
 					type: 'textinput',
 					label: 'Cue Number',
 					default: '1',
@@ -50,7 +50,7 @@ module.exports = function (self) {
 					regex: Regex.NUMBER,
 				},
 				{
-					id: 'list',
+					id: 'number',
 					type: 'textinput',
 					label: 'Cue Number',
 					default: '1',
@@ -81,7 +81,7 @@ module.exports = function (self) {
 					regex: Regex.NUMBER,
 				},
 				{
-					id: 'list',
+					id: 'number',
 					type: 'textinput',
 					label: 'Cue Number',
 					default: '1',
