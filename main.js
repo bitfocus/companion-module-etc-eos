@@ -5,6 +5,7 @@ const UpdateFeedbacks = require('./feedbacks')
 const { GetVariableDefinitions, UpdateVariableDefinitions } = require('./variables')
 const UpdatePresetDefinitions = require('./presets')
 const { ParamMap } = require('./param_map')
+const constants = require('./constants.js')
 
 class ModuleInstance extends InstanceBase {
 	constructor(internal) {
@@ -22,10 +23,13 @@ class ModuleInstance extends InstanceBase {
 		this.lastActChan = -1
 		this.eos_port = this.config.use_slip ? 3037 : 3032
 		this.readingWheels = false
+
+        // how many groups to get labels for
+        this.howManyGroupLabels = constants.NUM_GROUP_LABELS //30
 		
 		// Wheel information as module only variables, not exposed
-		this.wpc = 20
-		this.wheelsPerCategory = 20
+		this.wpc = constants.WHEELS_PER_CAT // 64
+		this.wheelsPerCategory = constants.WHEELS_PER_CAT // 64
 		this.wheels = []
 		this.emptyWheelData() // clear out encoder wheel values
 
@@ -379,8 +383,8 @@ class ModuleInstance extends InstanceBase {
                 // let group_num = matches[1]
                 // This is the group number that had a change (possibly a list??)
                 let group_num = message.args[1].value
-                // Only watching 20 groups - this maybe should be a global constant or something
-                if ( group_num <= 20 ) {
+                // Only watching "this.howManyGroupLabels" groups - this maybe should be a global constant or something
+                if ( group_num <= this.howManyGroupLabels ) {
                     // this.sendOsc('/eos/get/group/index', [ { type: 'i', value: group_num } ], false)
                     this.sendOsc('/eos/get/group', [ { type: 'i', value: group_num } ], false)
                     // this.log('warn', `Eos: Neet to update group info: ${JSON.stringify(group_num)}`)

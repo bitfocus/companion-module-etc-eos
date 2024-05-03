@@ -1,3 +1,5 @@
+const constants = require('./constants.js')
+
 const GetVariableDefinitions = function(self) {
 
 	const { ParamMap } = require('./param_map')
@@ -49,7 +51,7 @@ const GetVariableDefinitions = function(self) {
 	}
 
     // Group Titles - let's start with and try for 20
-    for (let i = 1; i<= 20; i++) {
+    for (let i = 1; i <= constants.NUM_GROUP_LABELS; i++) {
         variableDefinitions.push({ variableId: `group_label_${i}`, name: `Group ${i}'s label` })
     }
 

@@ -6,6 +6,9 @@
 //
 // NOTE: key is lower case
 //
+const constants = require('./constants.js')
+
+
 const ParamMap = {
 	'intens': 				'enc_intensity',
 	'background intensity':	'enc_background_intensity',
