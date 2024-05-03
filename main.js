@@ -255,6 +255,8 @@ class ModuleInstance extends InstanceBase {
 		const chan = '/eos/out/active/chan'
         const groupUpdated = /^\/eos\/out\/notify\/group\/list\/([\d\.]+)\/([\d\.]+)$/
 		const groupLabel = /^\/eos\/out\/get\/group\/([\d\.]+)\/list\/([\d\.]+)\/([\d\.]+)$/
+        const groupNull = /^\/eos\/out\/get\/group\/([\d\.]+)$/
+
         // Maybe for later
 		// const groupChannels = /^\/eos\/out\/get\/group\/([\d\.]+)\/channels\/list\/([\d\.]+)/([\d\.]+)$/
 
@@ -387,8 +389,18 @@ class ModuleInstance extends InstanceBase {
                 let group_num = matches[1]
                 // this.log('warn', `Eos: Capture group info: ${JSON.stringify(message)}`)
                 // this.log('warn', `Eos: Captured value for Group ${group_num} (group_label_${group_num}): ${message.args[2].value}`)
+                let group_label = message.args[2].value || ''
+                if ( group_label ) {
+                    this.setInstanceStates( {
+                        [`group_label_${group_num}`]: message.args[2].value,
+                        },
+                        true
+                    )
+                }
+            } else if ((matches = message.address.match(groupNull))) {
+                let group_num = matches[1]
                 this.setInstanceStates( {
-                    [`group_label_${group_num}`]: message.args[2].value,
+                    [`group_label_${group_num}`]: '',
                     },
                     true
                 )
