@@ -47,6 +47,12 @@ const GetVariableDefinitions = function(self) {
 	for (let i = 1; i <= 12; i++) {
 		variableDefinitions.push({ variableId: `softkey_label_${i}`, name: `Soft key ${i}'s label` })
 	}
+
+    // Group Titles - let's start with and try for 20
+    for (let i = 1; i<= 20; i++) {
+        variableDefinitions.push({ variableId: `group_label_${i}`, name: `Group ${i}'s label` })
+    }
+
 	return variableDefinitions;
 }
 

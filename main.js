@@ -253,6 +253,11 @@ class ModuleInstance extends InstanceBase {
 		const softkey = /^\/eos\/out\/softkey\/(\d+)$/
 		const cmd = /^\/eos\/out\/user\/(\d+)\/cmd$/
 		const chan = '/eos/out/active/chan'
+        const groupUpdated = /^\/eos\/out\/notify\/group\/list\/([\d\.]+)\/([\d\.]+)$/
+		const groupLabel = /^\/eos\/out\/get\/group\/([\d\.]+)\/list\/([\d\.]+)\/([\d\.]+)$/
+        // Maybe for later
+		// const groupChannels = /^\/eos\/out\/get\/group\/([\d\.]+)\/channels\/list\/([\d\.]+)/([\d\.]+)$/
+
 
 		// This is the raw OSC message, but we are getting something parsed already...
 		// const enc_wheel      = /^\/eos\/out\/active\/wheel\/(\d+),\s*(\w+)\s*\[(\w+)\]\(s\).\s+(\d+)\(i\),\s*([\d.]*)\(f\)$/
@@ -366,6 +371,27 @@ class ModuleInstance extends InstanceBase {
 					this.requestFullState()
 					this.lastActChan = 0
 				}
+            } else if ((matches = message.address.match(groupUpdated))) {
+                // A group was updated, request new title
+                // This is not the group number but the index number
+                // let group_num = matches[1]
+                // This is the group number that had a change (possibly a list??)
+                let group_num = message.args[1].value
+                // Only watching 20 groups - this maybe should be a global constant or something
+                if ( group_num <= 20 ) {
+                    // this.sendOsc('/eos/get/group/index', [ { type: 'i', value: group_num } ], false)
+                    this.sendOsc('/eos/get/group', [ { type: 'i', value: group_num } ], false)
+                    // this.log('warn', `Eos: Neet to update group info: ${JSON.stringify(group_num)}`)
+                }
+            } else if ((matches = message.address.match(groupLabel))) {
+                let group_num = matches[1]
+                // this.log('warn', `Eos: Capture group info: ${JSON.stringify(message)}`)
+                // this.log('warn', `Eos: Captured value for Group ${group_num} (group_label_${group_num}): ${message.args[2].value}`)
+                this.setInstanceStates( {
+                    [`group_label_${group_num}`]: message.args[2].value,
+                    },
+                    true
+                )
 			} else if ((matches = message.address.match(enc_wheel))) {
 				// set variables/state for wheel values
 				let wheel_num = matches[1]
@@ -512,6 +538,16 @@ class ModuleInstance extends InstanceBase {
 
 		// Switch to the correct user_id.
 		this.sendOsc('/eos/user', [ { type: 'i', value: this.config.user_id } ], false)
+        
+        // Turn on subscription for show file event updates
+        this.sendOsc('/eos/subscribe', [ { type: 'i', value: 1 } ], false)
+        
+        // Get 20 groups worth of labels - issue the request here to get the values,
+        // they are caught in the on.message elsewhere
+        for ( let i=1; i <= 20; i++ ) {
+            // this.sendOsc('/eos/get/group/index', [ { type: 'i', value: i } ], false)
+            this.sendOsc('/eos/get/group', [ { type: 'i', value: i } ], false)
+        }
 	}
 
 	/**
