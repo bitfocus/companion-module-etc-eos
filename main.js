@@ -21,7 +21,7 @@ class ModuleInstance extends InstanceBase {
 		this.debugToLogger = true
 
 		this.lastActChan = -1
-		this.eos_port = this.config.use_slip ? 3037 : 3032
+		this.eos_port = this.config.use_slip ? constants.EOS_PORT_SLIP : constants.EOS_PORT
 		this.readingWheels = false
 
         // how many groups to get labels for
@@ -77,7 +77,7 @@ class ModuleInstance extends InstanceBase {
 		if (currentHost !== this.config.host || currentUserId !== this.config.user_id
 			|| currentUseSlip !== this.config.use_slip ) {
 			this.closeOscSocket()
-			this.eos_port = this.config.use_slip ? 3037 : 3032
+			this.eos_port = this.config.use_slip ? constants.EOS_PORT_SLIP : constants.EOS_PORT
 			await this.init(config)
 		}
 	}
