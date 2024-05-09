@@ -1,6 +1,6 @@
 {
 	"name": "etc-eos",
-	"version": "2.0.9",
+	"version": "2.0.10",
 	"main": "main.js",
 	"scripts": {
 		"format": "prettier -w .",
@@ -12,11 +12,11 @@
 		"url": "git+https://github.com/bitfocus/companion-module-etc-eos.git"
 	},
 	"dependencies": {
-		"@companion-module/base": "~1.4.0",
+		"@companion-module/base": "~1.8.0",
 		"osc": "github:julusian/osc.js#companion-etc-eos"
 	},
 	"devDependencies": {
-		"@companion-module/tools": "^1.2.0",
+		"@companion-module/tools": "^1.5.0",
 		"serialport": "^11.0.0"
 	},
 	"prettier": "@companion-module/tools/.prettierrc.json"
