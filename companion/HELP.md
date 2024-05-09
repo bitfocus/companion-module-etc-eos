@@ -111,6 +111,7 @@ These parameters are reported when working with a fixture. You must select the f
 
 All of these variables are availabe in a string (integer) and a floating point format. Just append _stringval or _floatval to the end of the base name in the list below:
 
+```
 enc_intensity
 enc_background_intensity
 enc_zoom
@@ -221,7 +222,7 @@ enc_cie_x_7
 enc_cie_y_7
 enc_cie_x_8
 enc_cie_y_8
-
+```
 
 ## Wheels - By category
 
