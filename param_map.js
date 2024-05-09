@@ -6,6 +6,9 @@
 //
 // NOTE: key is lower case
 //
+const constants = require('./constants.js')
+
+
 const ParamMap = {
 	'intens': 				'enc_intensity',
 	'background intensity':	'enc_background_intensity',
@@ -99,7 +102,24 @@ const ParamMap = {
 	'form mspeed':			'enc_form_mspeed',
 	'tint':					'enc_tint',
 	'color temperature':	'enc_color_temperature',
-	'color mix mode 2':		'enc_color_mix_mode_2',	
+	'color mix mode 2':		'enc_color_mix_mode_2',
+    'color crossfade':      'enc_color_crossfade',
+    'CIE X':                'enc_cie_x',
+    'CIE Y':                'enc_cie_y',
+    'CIE X 2':              'enc_cie_x_2',
+    'CIE Y 2':              'enc_cie_y_2',
+    'CIE X 3':              'enc_cie_x_3',
+    'CIE Y 3':              'enc_cie_y_3',
+    'CIE X 4':              'enc_cie_x_4',
+    'CIE Y 4':              'enc_cie_y_4',
+    'CIE X 5':              'enc_cie_x_5',
+    'CIE Y 5':              'enc_cie_y_5',
+    'CIE X 6':              'enc_cie_x_6',
+    'CIE Y 6':              'enc_cie_y_6',
+    'CIE X 7':              'enc_cie_x_7',
+    'CIE Y 7':              'enc_cie_y_7',
+    'CIE X 8':              'enc_cie_x_8',
+    'CIE Y 8':              'enc_cie_y_8',
 }
 
 module.exports = { ParamMap }

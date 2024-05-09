@@ -1,3 +1,5 @@
+const constants = require('./constants.js')
+
 const GetVariableDefinitions = function(self) {
 
 	const { ParamMap } = require('./param_map')
@@ -47,6 +49,12 @@ const GetVariableDefinitions = function(self) {
 	for (let i = 1; i <= 12; i++) {
 		variableDefinitions.push({ variableId: `softkey_label_${i}`, name: `Soft key ${i}'s label` })
 	}
+
+    // Group Titles '
+    for (let i = 1; i <= constants.NUM_GROUP_LABELS; i++) {
+        variableDefinitions.push({ variableId: `group_label_${i}`, name: `Group ${i}'s label` })
+    }
+    // '
 	return variableDefinitions;
 }
 
