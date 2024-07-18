@@ -260,6 +260,7 @@ class ModuleInstance extends InstanceBase {
         const groupUpdated = /^\/eos\/out\/notify\/group\/list\/([\d\.]+)\/([\d\.]+)$/
 		const groupLabel = /^\/eos\/out\/get\/group\/([\d\.]+)\/list\/([\d\.]+)\/([\d\.]+)$/
         const groupNull = /^\/eos\/out\/get\/group\/([\d\.]+)$/
+        const colorhs = '/eos/out/color/hs'
 
         // Maybe for later
 		// const groupChannels = /^\/eos\/out\/get\/group\/([\d\.]+)\/channels\/list\/([\d\.]+)/([\d\.]+)$/
@@ -271,8 +272,8 @@ class ModuleInstance extends InstanceBase {
 
 		this.oscSocket.on('message', (message, self ) => {
 			if (this.debugToLogger) {
-				this.log('debug', `Eos OSC message args: ${JSON.stringify(message.args)}`)
 				this.log('debug', `Eos OSC message: ${message.address}`)
+				this.log('debug', `  Eos OSC message args: ${JSON.stringify(message.args)}`)
 			}
 
 			let matches
@@ -408,6 +409,21 @@ class ModuleInstance extends InstanceBase {
                     },
                     true
                 )
+			} else if ( message.address === colorhs ) {
+				// this.log('debug', `HS: ${hue} ${sat}`)
+				this.setInstanceStates(
+					{
+						hue: message.args[0].value.toFixed(3),
+						saturation: message.args[1].value.toFixed(3),
+						enc_hue_floatval: message.args[0].value.toFixed(3),
+						enc_hue_stringval: message.args[0].value.toFixed(3).toString(),
+						enc_saturation_floatval: message.args[1].value.toFixed(3),
+						enc_saturation_stringval: message.args[1].value.toFixed(3).toString(),
+						enc_saturationv2_floatval: message.args[1].value.toFixed(3),
+						enc_saturationv2_stringval: message.args[1].value.toFixed(3).toString(),
+					},
+					true
+				)
 			} else if ((matches = message.address.match(enc_wheel))) {
 				// set variables/state for wheel values
 				let wheel_num = matches[1]
@@ -558,9 +574,9 @@ class ModuleInstance extends InstanceBase {
         // Turn on subscription for show file event updates
         this.sendOsc('/eos/subscribe', [ { type: 'i', value: 1 } ], false)
         
-        // Get 20 groups worth of labels - issue the request here to get the values,
+        // Get xx groups worth of labels - issue the request here to get the values,
         // they are caught in the on.message elsewhere
-        for ( let i=1; i <= 20; i++ ) {
+        for ( let i=1; i <= this.howManyGroupLabels; i++ ) {
             // this.sendOsc('/eos/get/group/index', [ { type: 'i', value: i } ], false)
             this.sendOsc('/eos/get/group', [ { type: 'i', value: i } ], false)
         }

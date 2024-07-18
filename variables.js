@@ -23,6 +23,9 @@ const GetVariableDefinitions = function(self) {
 
 		{ variableId: 'cmd',						name: 'The current command line output for the user ' },
 		{ variableId: 'show_name',					name: 'The name of the show' },
+
+		{ variableId: 'hue',					    name: 'Current hue value' },
+		{ variableId: 'saturation',					name: 'Current saturation value' },
 	]
 
 	/* we can capture these params/attributes from related wheel updates as both string and float */
