@@ -8,12 +8,12 @@ module.exports = function (self) {
 				{
 					id: 'before',
 					type: 'dropdown',
-					name: 'Before',
+					label: 'Before',
 					default: 'clear',
 					tooltip: 'Clear or keep any existing command.',
 					choices: [
-						{ id: 'clear', name: 'Clear command line' },
-						{ id: 'keep', name: 'Keep command line' },
+						{ id: 'clear', label: 'Clear command line' },
+						{ id: 'keep', label: 'Keep command line' },
 					],
 				},
 				{
@@ -49,7 +49,7 @@ module.exports = function (self) {
 				{
 					id: 'osc_path',
 					type: 'textinput',
-					name: 'OSC path',
+					label: 'OSC path',
 					default: '/eos/path',
 					useVariables: true,
 				},
@@ -156,7 +156,7 @@ module.exports = function (self) {
 				{
 					id: 'list',
 					type: 'textinput',
-					name: 'Cue List',
+					label: 'Cue List',
 					default: '1',
 					regex: Regex.FLOAT_OR_INT,
 					useVariables: true,
@@ -164,7 +164,7 @@ module.exports = function (self) {
 				{
 					id: 'number',
 					type: 'textinput',
-					name: 'Cue Number',
+					label: 'Cue Number',
 					default: '1',
 					regex: Regex.FLOAT_OR_INT,
 					useVariables: true,
@@ -182,7 +182,7 @@ module.exports = function (self) {
 				{
 					id: 'macro',
 					type: 'textinput',
-					name: 'Macro',
+					label: 'Macro',
 					default: '1',
 					regex: Regex.FLOAT_OR_INT,
 					useVariables: true,
@@ -199,7 +199,7 @@ module.exports = function (self) {
 				{
 					id: 'key',
 					type: 'textinput',
-					name: 'Key',
+					label: 'Key',
 					tooltip: "See the module's help for information",
 					default: '1',
 					useVariables: true,
@@ -216,7 +216,7 @@ module.exports = function (self) {
 				{
 					id: 'id',
 					type: 'textinput',
-					name: 'Channel',
+					label: 'Channel',
 					default: '1',
 					regex: Regex.FLOAT_OR_INT,
 					useVariables: true,
@@ -224,7 +224,7 @@ module.exports = function (self) {
 				{
 					id: 'value',
 					type: 'textinput',
-					name: 'Value',
+					label: 'Value',
 					tooltip: "A percentage from 0 to 100, or 'out', 'full', 'min', 'max'.",
 					default: '100',
 					regex: '/^(\\d+|out|full|min|max)$/',
@@ -244,7 +244,7 @@ module.exports = function (self) {
 				{
 					id: 'id',
 					type: 'textinput',
-					name: 'Group',
+					label: 'Group',
 					default: '1',
 					regex: Regex.FLOAT_OR_INT,
 					useVariables: true,
@@ -252,7 +252,7 @@ module.exports = function (self) {
 				{
 					id: 'value',
 					type: 'textinput',
-					name: 'Value',
+					label: 'Value',
 					tooltip: "A percentage from 0 to 100, or 'out', 'full', 'min', 'max'.",
 					default: '100',
 					regex: '/^(\\d+|out|full|min|max)$/',
@@ -272,7 +272,7 @@ module.exports = function (self) {
 				{
 					id: 'id',
 					type: 'textinput',
-					name: 'Submaster',
+					label: 'Submaster',
 					default: '1',
 					regex: Regex.FLOAT_OR_INT,
 					useVariables: true,
@@ -280,7 +280,7 @@ module.exports = function (self) {
 				{
 					id: 'value',
 					type: 'textinput',
-					name: 'Value',
+					label: 'Value',
 					tooltip: "A percentage from 0 to 100, or 'out', 'full', 'min', 'max'.",
 					default: '100',
 					regex: '/^(\\d+|out|full|min|max)$/',
@@ -300,7 +300,7 @@ module.exports = function (self) {
 				{
 					id: 'sub',
 					type: 'textinput',
-					name: 'Submaster',
+					label: 'Submaster',
 					default: '1',
 					regex: Regex.NUMBER,
 					useVariables: true,
@@ -308,13 +308,13 @@ module.exports = function (self) {
 				{
 					id: 'button',
 					type: 'dropdown',
-					name: 'State',
+					label: 'State',
 					default: 'press',
 					tooltip: 'A percentage from 0 to 100',
 					choices: [
-						{ id: 'press', name: 'Press and Release' },
-						{ id: 'hold', name: 'Press and Hold' },
-						{ id: 'release', name: 'Release' },
+						{ id: 'press', label: 'Press and Release' },
+						{ id: 'hold', label: 'Press and Hold' },
+						{ id: 'release', label: 'Release' },
 					],
 				},
 			],
@@ -341,7 +341,7 @@ module.exports = function (self) {
 				{
 					id: 'preset',
 					type: 'textinput',
-					name: 'Preset',
+					label: 'Preset',
 					default: '1',
 					regex: Regex.FLOAT_OR_INT,
 					useVariables: true,
