@@ -68,12 +68,18 @@ const GetVariableDefinitions = function (self) {
 		variableDefinitions.push({ variableId: `softkey_label_${i}`, name: `Soft key ${i}'s label` })
 	}
 
-	// Group Titles '
-	for (let i = 1; i <= constants.NUM_GROUP_LABELS; i++) {
-		variableDefinitions.push({ variableId: `group_label_${i}`, name: `Group ${i}'s label` })
-	}
-	// '
-	return variableDefinitions
+    // Group Titles '
+    for (let i = 1; i <= constants.NUM_GROUP_LABELS; i++) {
+        variableDefinitions.push({ variableId: `group_label_${i}`, name: `Group ${i}'s label` })
+    }
+
+    // Macro Labels
+    for (let i = constants.NUM_MACRO_START; i < constants.NUM_MACRO_START + constants.NUM_MACRO_LABELS; i++) {
+        variableDefinitions.push({ variableId: `macro_label_${i}`, name: `Macro ${i}'s label` })
+    }
+
+    // '
+	return variableDefinitions;
 }
 
 const UpdateVariableDefinitions = function (self) {
