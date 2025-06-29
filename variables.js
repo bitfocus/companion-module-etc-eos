@@ -58,6 +58,13 @@ const GetVariableDefinitions = function(self) {
         variableDefinitions.push({ variableId: `group_label_${i}`, name: `Group ${i}'s label` })
     }
     // '
+	// Macro name variables (populate when received)
+	for (let i = 1; i <= 10; i++) {
+		variableDefinitions.push({
+			variableId: `macro_${i}_label`,
+			name: `Macro ${i} Name`,
+		});
+	}
 	return variableDefinitions;
 }
 

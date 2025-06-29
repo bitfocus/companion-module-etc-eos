@@ -132,5 +132,36 @@ module.exports = function (self) {
 			steps: [],
 			feedbacks: [],
 		},
+		macro_name: {
+			type: 'button',
+			category: 'Macros',
+			name: 'Get Macro # Name',
+			style: {
+				text: 'Get Macro# Name',
+				size: '14',
+				color: combineRgb(255, 255, 255),
+				bgcolor: combineRgb(0, 0, 0),
+			},
+			steps: [
+				{
+					down: [
+						{
+							actionId: 'get_macro_name',
+							options: { macro: '#' },
+						},
+					],
+					up: [],
+				},
+			],
+			feedbacks: [
+				{
+					feedbackId: 'macro_name_available',
+					options: { macro: '#' },
+					style: {
+						bgcolor: combineRgb(0, 150, 0),
+					},
+				},
+			],
+		},
 	})
 }

@@ -115,5 +115,27 @@ module.exports = function (self) {
 				return feedback.options.connected === self.instanceState['connected']
 			},
 		},
+		macro_name_available: {
+			type: 'boolean',
+			name: 'Macro Name Received',
+			description: 'Indicates when a macro name has been received',
+			defaultStyle: {
+				bgcolor: combineRgb(0, 150, 0),
+				color: combineRgb(255, 255, 255),
+			},
+			options: [
+				{
+					id: 'macro',
+					type: 'textinput',
+					label: 'Macro Number',
+					default: '1',
+					regex: Regex.FLOAT_OR_INT,
+				},
+			],
+			callback: (feedback) => {
+				const label = self.instanceState[`macro_${feedback.options.macro}_label`];
+				return label !== undefined && label !== '';
+			},
+		},
 	})
 }

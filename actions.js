@@ -193,6 +193,24 @@ module.exports = function (self) {
 				self.sendOsc('macro/fire', [{ type: 'i', value: Number(macro) }])
 			},
 		},
+		get_macro_name: {
+			name: 'Get Macro Name',
+			options: [
+				{
+					id: 'macro',
+					type: 'textinput',
+					label: 'Macro Number',
+					default: '1',
+					regex: Regex.FLOAT_OR_INT,
+					useVariables: true,
+				},
+			],
+			callback: async (event, context) => {
+				const macro = await context.parseVariablesInString(event.options.macro);
+				// send /eos/get/macro/{macro}
+				self.sendOsc(`/eos/get/macro/${macro}`, [], false);
+			},
+		},
 		press_key: {
 			name: 'Key: Press Key',
 			options: [

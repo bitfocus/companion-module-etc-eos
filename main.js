@@ -409,6 +409,13 @@ class ModuleInstance extends InstanceBase {
                     },
                     true
                 )
+			} else if ((matches = message.address.match(/^\/eos\/out\/get\/macro\/(\d+)\/list\/\d+\/\d+$/))) {
+				const macroNum = matches[1];
+				const macroLabel = message.args[2].value;
+				// store as variable
+				this.setInstanceStates({ [`macro_${macroNum}_label`]: macroLabel }, true);
+				// trigger feedbacks
+				this.checkFeedbacks('macro_name_available');
 			} else if ( message.address === colorhs ) {
 				// this.log('debug', `HS: ${hue} ${sat}`)
 				this.setInstanceStates(
@@ -659,25 +666,29 @@ class ModuleInstance extends InstanceBase {
 	 * @param appendUser    Whether to append the '/eos/' prefix to the command.
 	 */
 	sendOsc(path, args, appendPrefix) {
-		if (!this.config.host) {
-			return
-		}
+    if (!this.config.host) {
+        return
+    }
 
-		if (appendPrefix !== false) {
-			path = `/eos/${path}`
-		}
+    if (appendPrefix !== false) {
+        path = `/eos/${path}`
+    }
 
-		let packet = {
-			address: path,
-			args: args,
-		}
+    if (!Array.isArray(args)) {
+        args = []
+    }
 
-		if (this.debugToLogger) {
-			this.log('warn', `Eos: Sending packet: ${JSON.stringify(packet)}`)
-		}
+    let packet = { address: path }
+    if (args.length > 0) {
+        packet.args = args
+    }
 
-		this.oscSocket.send(packet)
-	}
+    if (this.debugToLogger) {
+        this.log('warn', `Eos: Sending packet: ${JSON.stringify(packet)}`)
+    }
+
+    this.oscSocket.send(packet)
+}
 
 	/*
 	 * For actions

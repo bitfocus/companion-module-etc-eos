@@ -1,7 +1,7 @@
 {
-	"id": "etc-eos",
-	"name": "etc-eos",
-	"shortname": "etc-eos",
+	"id": "etc-eos-christopher",
+	"name": "etc-eos-christopher",
+	"shortname": "etc-eos-christopher",
 	"description": "Interface to the ETC EOS lighting system",
 	"version": "0.0.0",
 	"license": "MIT",
@@ -25,6 +25,6 @@
 	},
 	"legacyIds": [],
 	"manufacturer": "ETC",
-	"products": ["EOS"],
+	"products": ["EOS Christopher"],
 	"keywords": ["Lighting"]
 }
