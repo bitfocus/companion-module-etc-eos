@@ -13,45 +13,45 @@ class ModuleInstance extends InstanceBase {
 	}
 
 	async init(config) {
-        this.config = config
+			this.config = config
 
-        this.updateStatus(InstanceStatus.Disconnected)
+			this.updateStatus(InstanceStatus.Disconnected)
 
-        this.instanceState = {}
-        this.debugToLogger = true
+			this.instanceState = {}
+			this.debugToLogger = true
 
-        this.lastActChan = -1
-        this.eos_port = this.config.use_slip ? constants.EOS_PORT_SLIP : constants.EOS_PORT
-        this.readingWheels = false
+			this.lastActChan = -1
+			this.eos_port = this.config.use_slip ? constants.EOS_PORT_SLIP : constants.EOS_PORT
+			this.readingWheels = false
 
-        // how many groups to get labels for
-        this.howManyGroupLabels = constants.NUM_GROUP_LABELS //30
+	// how many groups to get labels for
+	this.howManyGroupLabels = constants.NUM_GROUP_LABELS //30
         
-        // Wheel information as module only variables, not exposed
-        this.wpc = constants.WHEELS_PER_CAT // 64
-        this.wheelsPerCategory = constants.WHEELS_PER_CAT // 64
-        this.wheels = []
-        this.emptyWheelData() // clear out encoder wheel values
+			// Wheel information as module only variables, not exposed
+			this.wpc = constants.WHEELS_PER_CAT // 64
+			this.wheelsPerCategory = constants.WHEELS_PER_CAT // 64
+			this.wheels = []
+			this.emptyWheelData() // clear out encoder wheel values
 
-        this.updateActions() // export actions
-        this.updateFeedbacks() // export feedbacks
-        this.updateVariableDefinitions() // export variable definitions
-        this.updatePresets() // export presets
+			this.updateActions() // export actions
+			this.updateFeedbacks() // export feedbacks
+			this.updateVariableDefinitions() // export variable definitions
+			this.updatePresets() // export presets
 
-        this.oscSocket = this.getOsc10Socket(this.config.host, this.eos_port )
-        this.setOscSocketListeners()
-        this.startReconnectTimer()
+			this.oscSocket = this.getOsc10Socket(this.config.host, this.eos_port )
+			this.setOscSocketListeners()
+			this.startReconnectTimer()
 
-        // --- Macro name polling every 60 seconds ---
-        if (this._macroNameInterval) {
-            clearInterval(this._macroNameInterval)
-        }
-        this._macroNameInterval = setInterval(() => {
-            for (let i = 1; i <= 1500; i++) {
-                this.sendOsc(`/eos/get/macro/${i}`, [], false)
-            }
-        }, 60000)
-    }
+			// --- Macro name polling every 60 seconds ---
+			if (this._macroNameInterval) {
+				clearInterval(this._macroNameInterval)
+			}
+			this._macroNameInterval = setInterval(() => {
+				for (let i = 1; i <= 1500; i++) {
+					this.sendOsc(`/eos/get/macro/${i}`, [], false)
+				}
+			}, 60000)
+		}
 
 	// Empty wheel data
 	emptyWheelData() {
