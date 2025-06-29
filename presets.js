@@ -135,33 +135,25 @@ module.exports = function (self) {
 		macro_name: {
 			type: 'button',
 			category: 'Macros',
-			name: 'Get Macro # Name',
+			name: 'Macro # Name',
 			style: {
-				text: 'Get Macro# Name',
+				text: '$(etc-eos-christopher:macro_####_label)',
 				size: '14',
-				color: combineRgb(255, 255, 255),
-				bgcolor: combineRgb(0, 0, 0),
+				color: combineRgb(255, 255, 192),
+				bgcolor: combineRgb(204, 101, 0),
 			},
 			steps: [
 				{
 					down: [
 						{
-							actionId: 'get_macro_name',
+							actionId: 'macro_with_name',
 							options: { macro: '#' },
 						},
 					],
 					up: [],
 				},
 			],
-			feedbacks: [
-				{
-					feedbackId: 'macro_name_available',
-					options: { macro: '#' },
-					style: {
-						bgcolor: combineRgb(0, 150, 0),
-					},
-				},
-			],
+			feedbacks: [],
 		},
 	})
 }

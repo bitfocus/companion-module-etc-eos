@@ -500,6 +500,11 @@ class ModuleInstance extends InstanceBase {
 		this.oscSocket.socket.on('connect', () => {
 			this.setConnectionState(true)
 			this.requestFullState()
+			// Automatically request macro names for macros 1-10 on connect,
+			// so macro labels are available as variables without user action.
+			for (let i = 1; i <= 1500; i++) {
+				this.sendOsc(`/eos/get/macro/${i}`, [], false)
+			}
 		})
 
 		// this.oscSocket.socket.on('ready', () => { })

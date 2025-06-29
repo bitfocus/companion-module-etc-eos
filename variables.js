@@ -59,7 +59,7 @@ const GetVariableDefinitions = function(self) {
     }
     // '
 	// Macro name variables (populate when received)
-	for (let i = 1; i <= 10; i++) {
+	for (let i = 1; i <= 1500; i++) {
 		variableDefinitions.push({
 			variableId: `macro_${i}_label`,
 			name: `Macro ${i} Name`,

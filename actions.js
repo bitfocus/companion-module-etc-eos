@@ -193,8 +193,8 @@ module.exports = function (self) {
 				self.sendOsc('macro/fire', [{ type: 'i', value: Number(macro) }])
 			},
 		},
-		get_macro_name: {
-			name: 'Get Macro Name',
+		macro_with_name: {
+			name: 'Macro with Name',
 			options: [
 				{
 					id: 'macro',
