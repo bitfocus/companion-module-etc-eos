@@ -133,27 +133,27 @@ module.exports = function (self) {
 			feedbacks: [],
 		},
 		macro_name: {
-			type: 'button',
-			category: 'Macros',
-			name: 'Macro # Name',
-			style: {
-				text: '$(etc-eos-christopher:macro_####_label)',
-				size: '14',
-				color: combineRgb(255, 255, 192),
-				bgcolor: combineRgb(204, 101, 0),
-			},
-			steps: [
-				{
-					down: [
-						{
-							actionId: 'macro_with_name',
-							options: { macro: '#' },
-						},
-					],
-					up: [],
-				},
-			],
-			feedbacks: [],
-		},
+    type: 'button',
+    category: 'Macros',
+    name: 'Macro # Name',
+    style: {
+        text: '$(etc-eos-christopher:macro_1_label)',
+        size: '14',
+        color: combineRgb(255, 255, 192),
+        bgcolor: combineRgb(204, 101, 0),
+    },
+    steps: [
+        {
+            down: [
+                {
+                    actionId: 'run_macro',
+                    options: { macro: '1' }, // Ersetze #### durch die gewünschte Macro-Nummer, z.B. '1'
+                },
+            ],
+            up: [],
+        },
+    ],
+    feedbacks: [],
+},
 	})
 }
