@@ -42,15 +42,23 @@ class ModuleInstance extends InstanceBase {
         this.setOscSocketListeners()
         this.startReconnectTimer()
 
-        // --- Macro name polling every 60 seconds ---
-        if (this._macroNameInterval) {
-            clearInterval(this._macroNameInterval)
-        }
-        this._macroNameInterval = setInterval(() => {
-            for (let i = 1; i <= 1500; i++) {
-                this.sendOsc(`/eos/get/macro/${i}`, [], false)
-            }
-        }, 60000)
+		// --- Macro name polling every 60 seconds ---
+		if (this._macroNameInterval) {
+			clearInterval(this._macroNameInterval)
+		}
+		this._macroNameInterval = setInterval(() => {
+			// --- Macro-Label-Variablen löschen ---
+			let macroVars = {};
+			for (let i = 1; i <= 1500; i++) {
+				macroVars[`macro_${i}_label`] = '';
+			}
+			this.setVariableValues(macroVars);
+
+			// --- Macro-Namen abfragen ---
+			for (let i = 1; i <= 1500; i++) {
+				this.sendOsc(`/eos/get/macro/${i}`, [], false)
+			}
+		}, 60000)
     }
 
 	// Empty wheel data
