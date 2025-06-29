@@ -137,7 +137,7 @@ module.exports = function (self) {
     category: 'Macros',
     name: 'Macro # Name',
     style: {
-        text: '$(etc-eos-christopher:macro_1_label)',
+        text: '$(etc-eos:macro_1_label)',
         size: '14',
         color: combineRgb(255, 255, 192),
         bgcolor: combineRgb(204, 101, 0),
