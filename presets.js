@@ -132,5 +132,28 @@ module.exports = function (self) {
 			steps: [],
 			feedbacks: [],
 		},
+		macro_name: {
+    type: 'button',
+    category: 'Macros',
+    name: 'Macro # Name',
+    style: {
+        text: '$(etc-eos:macro_1_label)',
+        size: '14',
+        color: combineRgb(255, 255, 192),
+        bgcolor: combineRgb(204, 101, 0),
+    },
+    steps: [
+        {
+            down: [
+                {
+                    actionId: 'run_macro',
+                    options: { macro: '1' }, // Ersetze #### durch die gewünschte Macro-Nummer, z.B. '1'
+                },
+            ],
+            up: [],
+        },
+    ],
+    feedbacks: [],
+},
 	})
 }
