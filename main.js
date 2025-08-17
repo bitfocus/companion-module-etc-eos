@@ -390,7 +390,7 @@ class ModuleInstance extends InstanceBase {
 				if (group_num <= this.howManyGroupLabels) {
 					// this.sendOsc('/eos/get/group/index', [ { type: 'i', value: group_num } ], false)
 					this.sendOsc('/eos/get/group', [{ type: 'i', value: group_num }], false)
-					// this.log('warn', `Eos: Neet to update group info: ${JSON.stringify(group_num)}`)
+					// this.log('warn', `Eos: Need to update group info: ${JSON.stringify(group_num)}`)
 				}
 			} else if ((matches = message.address.match(groupLabel))) {
 				let group_num = matches[1]

@@ -109,7 +109,7 @@ _Soft keys 7-12 are the alternates available when you toggle the {More SK} butto
 
 These parameters are reported when working with a fixture. You must select the fixture by typing its number on the command line. If using next/last or other methods the EOS software does not consistently send updates on the values.
 
-All of these variables are availabe in a string (integer) and a floating point format. Just append \_stringval or \_floatval to the end of the base name in the list below:
+All of these variables are available in a string (integer) and a floating point format. Just append \_stringval or \_floatval to the end of the base name in the list below:
 
 ```
 enc_intensity
@@ -226,7 +226,7 @@ enc_cie_y_8
 
 ## Wheels - By category
 
-The encoder wheels are also availble by category:
+The encoder wheels are also available by category:
 
 | Category# | Description   |
 | --------- | ------------- |
