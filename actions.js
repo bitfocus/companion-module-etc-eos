@@ -99,10 +99,10 @@ module.exports = function (self) {
 									i++
 									str += ' ' + rawArgs[i]
 								}
-							} else if(str.startsWith('{')) {
+							} else if (str.startsWith('{')) {
 								//Probably a JSON object
 								try {
-									args.push((JSON.parse(rawArgs[i])))
+									args.push(JSON.parse(rawArgs[i]))
 								} catch (error) {
 									this.log('error', `not a JSON object ${rawArgs[i]}`)
 								}
