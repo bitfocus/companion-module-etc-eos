@@ -617,7 +617,7 @@ class ModuleInstance extends InstanceBase {
 		//
 		// If the CUE value is " 0.0" then reset active cue list/number
 		const cuematch =
-			/^(?<CUE_NUMBER>[\d\.]+\/[\d\.]+|[\d\.]+)?(?<CUEWLIST>\/[\d\.]+)?( (?<LABEL>.*?))? (?<DURATION>[\d\.]+)( (?<INTENSITY>[\d\.]+%))?$/
+			/^(?<CUE_NUMBER>[\d\.]+\/[\d\.]+|[\d\.]+)?(?<CUE_LIST>\/[\d\.]+)?( (?<LABEL>.*?))? (?<DURATION>[\d\.]+)( (?<INTENSITY>[\d\.]+%))?$/
 		let matches = cueName.match(cuematch)
 
 		if (matches !== null && matches.length >= 6) {
@@ -641,7 +641,7 @@ class ModuleInstance extends InstanceBase {
 				true
 			)
 		}
-		// Clear out when active cue is no longer activve
+		// Clear out when active cue is no longer active
 		if ('active' == type && (' 0.0 ' == cueName.substring(0, 5) || '' == cueName)) {
 			this.setInstanceStates(
 				{
