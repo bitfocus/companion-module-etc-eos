@@ -58,6 +58,24 @@ describe('ModuleInstance', () => {
 			})
 		})
 
+		test('should handle a cue with unusual characters in the label', () => {
+			expect(instance.parseCueName('test', '1/2 before after / max. colon : 100% end 1.0 100%')).toEqual()
+			expect(instance.setVariableValues).toHaveBeenCalledWith({
+				cue_test_duration: '1.0',
+				cue_test_intensity: '100%',
+				cue_test_label: ' before after / max. colon : 100% end',
+			})
+		})
+
+		test('should handle a cue with shortest time', () => {
+			expect(instance.parseCueName('test', '1/2 min 0.0 100%')).toEqual()
+			expect(instance.setVariableValues).toHaveBeenCalledWith({
+				cue_test_duration: '0.0',
+				cue_test_intensity: '100%',
+				cue_test_label: ' min',
+			})
+		})
+
 		test('should handle a cue with level', () => {
 			expect(instance.parseCueName('test', '51.1 Drums 3.0 100%')).toEqual()
 			expect(instance.setVariableValues).toHaveBeenCalledWith({
