@@ -1,0 +1,41 @@
+name: Node CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [18.x]
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Prepare Environment
+        run: |
+          yarn install
+        env:
+          CI: true
+      # TODO(Peter): No prettier until we resolve the constants file
+      # - name: prettier
+      #   run: |
+      #     yarn prettier --check .
+      - name: Test jest
+        run: |
+          yarn test
+        env:
+          CI: true
+      - name: Test package
+        run: |
+          yarn companion-module-build
+        env:
+          CI: true
