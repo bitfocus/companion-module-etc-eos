@@ -242,7 +242,7 @@ class ModuleInstance extends InstanceBase {
 			if (this.instanceState['connected'] === true) {
 				// Only show errors if we're connected, otherwise we'll flood the debug log each time
 				//  the module tries to reconnect to the console.
-				this.log('debug', `Error: ${err.message}`)
+				this.log('error', `Error: ${err.message}`)
 			}
 		})
 
@@ -390,12 +390,12 @@ class ModuleInstance extends InstanceBase {
 				if (group_num <= this.howManyGroupLabels) {
 					// this.sendOsc('/eos/get/group/index', [ { type: 'i', value: group_num } ], false)
 					this.sendOsc('/eos/get/group', [{ type: 'i', value: group_num }], false)
-					// this.log('warn', `Eos: Need to update group info: ${JSON.stringify(group_num)}`)
+					// this.log('info', `Eos: Need to update group info: ${JSON.stringify(group_num)}`)
 				}
 			} else if ((matches = message.address.match(groupLabel))) {
 				let group_num = matches[1]
-				// this.log('warn', `Eos: Capture group info: ${JSON.stringify(message)}`)
-				// this.log('warn', `Eos: Captured value for Group ${group_num} (group_label_${group_num}): ${message.args[2].value}`)
+				// this.log('info', `Eos: Capture group info: ${JSON.stringify(message)}`)
+				// this.log('info', `Eos: Captured value for Group ${group_num} (group_label_${group_num}): ${message.args[2].value}`)
 				let group_label = message.args[2].value || ''
 				if (group_label) {
 					this.setInstanceStates(
@@ -675,7 +675,7 @@ class ModuleInstance extends InstanceBase {
 		}
 
 		if (this.debugToLogger) {
-			this.log('warn', `Eos: Sending packet: ${JSON.stringify(packet)}`)
+			this.log('info', `Eos: Sending packet: ${JSON.stringify(packet)}`)
 		}
 
 		this.oscSocket.send(packet)
