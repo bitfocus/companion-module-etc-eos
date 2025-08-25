@@ -352,11 +352,7 @@ class ModuleInstance extends InstanceBase {
 					},
 					true
 				)
-			} else if (
-				message.address === version &&
-				message.args.length === 1 &&
-				message.args[0].type === 's'
-			) {
+			} else if (message.address === version && message.args.length === 1 && message.args[0].type === 's') {
 				this.setInstanceStates(
 					{
 						eos_version: message.args[0].value,
