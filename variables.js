@@ -23,6 +23,10 @@ const GetVariableDefinitions = function (self) {
 		{ variableId: 'cmd', name: 'The current command line output for the user ' },
 		{ variableId: 'show_name', name: 'The name of the show' },
 
+		{ variableId: 'eos_version', name: 'The Eos software version' },
+		{ variableId: 'fixture_library_version', name: 'The fixture library version' },
+		{ variableId: 'gel_swatch_type', name: 'The gel swatch type' },
+
 		{ variableId: 'hue', name: 'Current hue value' },
 		{ variableId: 'saturation', name: 'Current saturation value' },
 	]
