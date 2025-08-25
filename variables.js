@@ -64,7 +64,7 @@ const GetVariableDefinitions = function (self) {
 	}
 
 	// There are 6 soft keys, and 6 alternates (exposed with {More SK}).
-	for (let i = 1; i <= 12; i++) {
+	for (let i = 1; i <= constants.NUM_SOFTKEYS; i++) {
 		variableDefinitions.push({ variableId: `softkey_label_${i}`, name: `Soft key ${i}'s label` })
 	}
 
