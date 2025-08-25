@@ -650,6 +650,7 @@ class ModuleInstance extends InstanceBase {
 				},
 				true
 			)
+			this.checkFeedbacks('active_cue')
 		}
 	}
 
