@@ -310,7 +310,6 @@ module.exports = function (self) {
 					type: 'dropdown',
 					label: 'State',
 					default: 'press',
-					tooltip: 'A percentage from 0 to 100',
 					choices: [
 						{ id: 'press', label: 'Press and Release' },
 						{ id: 'hold', label: 'Press and Hold' },
