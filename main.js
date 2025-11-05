@@ -255,6 +255,7 @@ class ModuleInstance extends InstanceBase {
 		const cuePreviousText = '/eos/out/previous/cue/text'
 		const cuePreviousOut = '/eos/out/previous/cue'
 		const showName = '/eos/out/show/name'
+		const version = '/eos/out/get/version'
 		const showLoaded = '/eos/out/event/show/loaded'
 		const showCleared = '/eos/out/event/show/cleared'
 		const softkey = /^\/eos\/out\/softkey\/(\d+)$/
@@ -333,6 +334,30 @@ class ModuleInstance extends InstanceBase {
 				this.setInstanceStates(
 					{
 						show_name: message.args[0].value,
+					},
+					true
+				)
+			} else if (
+				message.address === version &&
+				message.args.length === 3 &&
+				message.args[0].type === 's' &&
+				message.args[1].type === 's' &&
+				message.args[2].type === 'i'
+			) {
+				this.setInstanceStates(
+					{
+						eos_version: message.args[0].value,
+						fixture_library_version: message.args[1].value,
+						gel_swatch_type: message.args[2].value,
+					},
+					true
+				)
+			} else if (message.address === version && message.args.length === 1 && message.args[0].type === 's') {
+				this.setInstanceStates(
+					{
+						eos_version: message.args[0].value,
+						fixture_library_version: '',
+						gel_swatch_type: '',
 					},
 					true
 				)
@@ -580,6 +605,8 @@ class ModuleInstance extends InstanceBase {
 		// Turn on subscription for show file event updates
 		this.sendOsc('/eos/subscribe', [{ type: 'i', value: 1 }], false)
 
+		this.sendOsc('get/version', [])
+
 		// Get xx groups worth of labels - issue the request here to get the values,
 		// they are caught in the on.message elsewhere
 		for (let i = 1; i <= this.howManyGroupLabels; i++) {
@@ -650,6 +677,7 @@ class ModuleInstance extends InstanceBase {
 				},
 				true
 			)
+			this.checkFeedbacks('active_cue')
 		}
 	}
 
@@ -658,7 +686,7 @@ class ModuleInstance extends InstanceBase {
 	 *
 	 * @param path          The OSC path to send
 	 * @param args          An array of arguments, or empty if no arguments needed
-	 * @param appendUser    Whether to append the '/eos/' prefix to the command.
+	 * @param appendPrefix  Whether to append the '/eos/' prefix to the command.
 	 */
 	sendOsc(path, args, appendPrefix) {
 		if (!this.config.host) {

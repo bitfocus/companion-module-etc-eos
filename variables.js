@@ -23,6 +23,10 @@ const GetVariableDefinitions = function (self) {
 		{ variableId: 'cmd', name: 'The current command line output for the user ' },
 		{ variableId: 'show_name', name: 'The name of the show' },
 
+		{ variableId: 'eos_version', name: 'The Eos software version' },
+		{ variableId: 'fixture_library_version', name: 'The fixture library version' },
+		{ variableId: 'gel_swatch_type', name: 'The gel swatch type' },
+
 		{ variableId: 'hue', name: 'Current hue value' },
 		{ variableId: 'saturation', name: 'Current saturation value' },
 	]
@@ -60,7 +64,7 @@ const GetVariableDefinitions = function (self) {
 	}
 
 	// There are 6 soft keys, and 6 alternates (exposed with {More SK}).
-	for (let i = 1; i <= 12; i++) {
+	for (let i = 1; i <= constants.NUM_SOFTKEYS; i++) {
 		variableDefinitions.push({ variableId: `softkey_label_${i}`, name: `Soft key ${i}'s label` })
 	}
 

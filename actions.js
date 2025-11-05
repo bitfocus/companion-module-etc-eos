@@ -310,7 +310,6 @@ module.exports = function (self) {
 					type: 'dropdown',
 					label: 'State',
 					default: 'press',
-					tooltip: 'A percentage from 0 to 100',
 					choices: [
 						{ id: 'press', label: 'Press and Release' },
 						{ id: 'hold', label: 'Press and Hold' },
@@ -351,6 +350,46 @@ module.exports = function (self) {
 				const preset = await context.parseVariablesInString(event.options.preset)
 
 				self.sendOsc(`preset/${preset}/fire`, [])
+			},
+		},
+		softkey: {
+			name: 'Softkey',
+			options: [
+				{
+					id: 'key',
+					type: 'textinput',
+					label: 'Softkey',
+					default: '1',
+					regex: Regex.NUMBER,
+					useVariables: true,
+				},
+				{
+					id: 'button',
+					type: 'dropdown',
+					label: 'State',
+					default: 'press',
+					choices: [
+						{ id: 'press', label: 'Press and Release' },
+						{ id: 'hold', label: 'Press and Hold' },
+						{ id: 'release', label: 'Release' },
+					],
+				},
+			],
+			callback: async (event, context) => {
+				const key = await context.parseVariablesInString(event.options.key)
+
+				let arg
+				switch (event.options.button) {
+					// case 'press': no arg needed
+					case 'hold':
+						arg = { type: 'f', value: 1.0 }
+						break
+					case 'release':
+						arg = { type: 'f', value: 0.0 }
+						break
+				}
+
+				self.sendOsc(`softkey/${key}`, arg)
 			},
 		},
 	})

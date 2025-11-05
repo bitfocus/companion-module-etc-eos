@@ -22,6 +22,7 @@ describe('ModuleInstance', () => {
 	beforeEach(() => {
 		instance = new module('')
 		instance.instanceState = {}
+		instance.checkFeedbacks = jest.fn()
 		instance.setVariableValues = jest.fn()
 	})
 
@@ -47,6 +48,7 @@ describe('ModuleInstance', () => {
 		test('should handle an active cue', () => {
 			expect(instance.parseCueName('active', '')).toEqual()
 			expect(instance.setVariableValues).toHaveBeenCalled()
+			expect(instance.checkFeedbacks).toHaveBeenCalledWith('active_cue')
 		})
 
 		test('should handle a pending cue < 1 min', () => {

@@ -77,31 +77,34 @@ Note: `\n` is used to put a new line in the button's text. It's unrelated to usi
 
 A list of the available variables is listed on the module's config page, and is also available below:
 
-| Variable                        | Description                         | Example value               |
-| ------------------------------- | ----------------------------------- | --------------------------- |
-| $(etc-eos:cue_active_list)      | The active cue list number          | 1                           |
-| $(etc-eos:cue_active_num)       | The active cue number               | 30                          |
-| $(etc-eos:cue_active_label)     | The active cue label                | Intermission                |
-| $(etc-eos:cue_active_duration)  | The active cue duration in seconds  | 3.0                         |
-| $(etc-eos:cue_active_intensity) | The active cue intensity percent    | 100%                        |
-| $(etc-eos:cue_pending_list)     | The pending cue list number         | 1                           |
-| $(etc-eos:cue_pending_num)      | The pending cue number              | 40                          |
-| $(etc-eos:cue_pending_label)    | The pending cue label               | Act 3                       |
-| $(etc-eos:cue_pending_duration) | The pending cue duration in seconds | 3.0                         |
-| $(etc-eos:show_name)            | The name of the show                | My show                     |
-| $(etc-eos:cmd)                  | The command line for the user       | LIVE: Cue 20 : Sub 1 @ 60 # |
-| $(etc-eos:softkey_label_1)      | Soft key 1's label                  | Attributes                  |
-| $(etc-eos:softkey_label_2)      | Soft key 2's label                  | Fw/Hg                       |
-| $(etc-eos:softkey_label_3)      | Soft key 3's label                  | AutoMark Off                |
-| $(etc-eos:softkey_label_4)      | Soft key 4's label                  | Link/Loop                   |
-| $(etc-eos:softkey_label_5)      | Soft key 5's label                  | Execute                     |
-| $(etc-eos:softkey_label_6)      | Soft key 6's label                  |                             |
-| $(etc-eos:softkey_label_7)      | Soft key 7's label                  |                             |
-| $(etc-eos:softkey_label_8)      | Soft key 8's label                  |                             |
-| $(etc-eos:softkey_label_9)      | Soft key 9's label                  |                             |
-| $(etc-eos:softkey_label_10)     | Soft key 10's label                 |                             |
-| $(etc-eos:softkey_label_11)     | Soft key 11's label                 | Offset                      |
-| $(etc-eos:softkey_label_12)     | Soft key 12's label                 | AutoBlk Clean               |
+| Variable                           | Description                         | Example value               |
+| ---------------------------------- | ----------------------------------- | --------------------------- |
+| $(etc-eos:cue_active_list)         | The active cue list number          | 1                           |
+| $(etc-eos:cue_active_num)          | The active cue number               | 30                          |
+| $(etc-eos:cue_active_label)        | The active cue label                | Intermission                |
+| $(etc-eos:cue_active_duration)     | The active cue duration in seconds  | 3.0                         |
+| $(etc-eos:cue_active_intensity)    | The active cue intensity percent    | 100%                        |
+| $(etc-eos:cue_pending_list)        | The pending cue list number         | 1                           |
+| $(etc-eos:cue_pending_num)         | The pending cue number              | 40                          |
+| $(etc-eos:cue_pending_label)       | The pending cue label               | Act 3                       |
+| $(etc-eos:cue_pending_duration)    | The pending cue duration in seconds | 3.0                         |
+| $(etc-eos:show_name)               | The name of the show                | My show                     |
+| $(etc-eos:eos_version)             | The Eos software version            | 3.3.0.273                   |
+| $(etc-eos:fixture_library_version) | The fixture library version         | 3.3.0.102                   |
+| $(etc-eos:gel_swatch_type)         | The gel swatch type                 | 0                           |
+| $(etc-eos:cmd)                     | The command line for the user       | LIVE: Cue 20 : Sub 1 @ 60 # |
+| $(etc-eos:softkey_label_1)         | Soft key 1's label                  | Attributes                  |
+| $(etc-eos:softkey_label_2)         | Soft key 2's label                  | Fw/Hg                       |
+| $(etc-eos:softkey_label_3)         | Soft key 3's label                  | AutoMark Off                |
+| $(etc-eos:softkey_label_4)         | Soft key 4's label                  | Link/Loop                   |
+| $(etc-eos:softkey_label_5)         | Soft key 5's label                  | Execute                     |
+| $(etc-eos:softkey_label_6)         | Soft key 6's label                  |                             |
+| $(etc-eos:softkey_label_7)         | Soft key 7's label                  |                             |
+| $(etc-eos:softkey_label_8)         | Soft key 8's label                  |                             |
+| $(etc-eos:softkey_label_9)         | Soft key 9's label                  |                             |
+| $(etc-eos:softkey_label_10)        | Soft key 10's label                 |                             |
+| $(etc-eos:softkey_label_11)        | Soft key 11's label                 | Offset                      |
+| $(etc-eos:softkey_label_12)        | Soft key 12's label                 | AutoBlk Clean               |
 
 _Soft keys 7-12 are the alternates available when you toggle the {More SK} button._
 
