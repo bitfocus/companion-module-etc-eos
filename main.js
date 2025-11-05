@@ -24,9 +24,9 @@ class ModuleInstance extends InstanceBase {
 		this.eos_port = this.config.use_slip ? constants.EOS_PORT_SLIP : constants.EOS_PORT
 		this.readingWheels = false
 
-        // how many groups to get labels for
-        this.howManyGroupLabels = constants.NUM_GROUP_LABELS //30
-		
+		// how many groups to get labels for
+		this.howManyGroupLabels = constants.NUM_GROUP_LABELS //30
+
 		// Wheel information as module only variables, not exposed
 		this.wpc = constants.WHEELS_PER_CAT // 64
 		this.wheelsPerCategory = constants.WHEELS_PER_CAT // 64
@@ -38,7 +38,7 @@ class ModuleInstance extends InstanceBase {
 		this.updateVariableDefinitions() // export variable definitions
 		this.updatePresets() // export presets
 
-		this.oscSocket = this.getOsc10Socket(this.config.host, this.eos_port )
+		this.oscSocket = this.getOsc10Socket(this.config.host, this.eos_port)
 		this.setOscSocketListeners()
 		this.startReconnectTimer()
 	}
@@ -53,7 +53,7 @@ class ModuleInstance extends InstanceBase {
 			this.wheels[i].floatval = ''
 		}
 	}
-	
+
 	// When module gets deleted
 	async destroy() {
 		// Clear the reconnect timer if it exists.
@@ -71,11 +71,14 @@ class ModuleInstance extends InstanceBase {
 		let currentHost = this.config.host
 		let currentUserId = this.config.user_id
 		let currentUseSlip = this.config.use_slip
-		
+
 		this.config = config
 
-		if (currentHost !== this.config.host || currentUserId !== this.config.user_id
-			|| currentUseSlip !== this.config.use_slip ) {
+		if (
+			currentHost !== this.config.host ||
+			currentUserId !== this.config.user_id ||
+			currentUseSlip !== this.config.use_slip
+		) {
 			this.closeOscSocket()
 			this.eos_port = this.config.use_slip ? constants.EOS_PORT_SLIP : constants.EOS_PORT
 			await this.init(config)
@@ -100,7 +103,7 @@ class ModuleInstance extends InstanceBase {
 				width: 4,
 				regex: '/^(-1|0|\\d+)$/',
 			},
-/*
+			/*
 			{
 				type: 'number',
 				id: 'eos_port',
@@ -239,7 +242,7 @@ class ModuleInstance extends InstanceBase {
 			if (this.instanceState['connected'] === true) {
 				// Only show errors if we're connected, otherwise we'll flood the debug log each time
 				//  the module tries to reconnect to the console.
-				this.log('debug', `Error: ${err.message}`)
+				this.log('error', `Error: ${err.message}`)
 			}
 		})
 
@@ -257,20 +260,19 @@ class ModuleInstance extends InstanceBase {
 		const softkey = /^\/eos\/out\/softkey\/(\d+)$/
 		const cmd = /^\/eos\/out\/user\/(\d+)\/cmd$/
 		const chan = '/eos/out/active/chan'
-        const groupUpdated = /^\/eos\/out\/notify\/group\/list\/([\d\.]+)\/([\d\.]+)$/
+		const groupUpdated = /^\/eos\/out\/notify\/group\/list\/([\d\.]+)\/([\d\.]+)$/
 		const groupLabel = /^\/eos\/out\/get\/group\/([\d\.]+)\/list\/([\d\.]+)\/([\d\.]+)$/
-        const groupNull = /^\/eos\/out\/get\/group\/([\d\.]+)$/
-        const colorhs = '/eos/out/color/hs'
+		const groupNull = /^\/eos\/out\/get\/group\/([\d\.]+)$/
+		const colorhs = '/eos/out/color/hs'
 
-        // Maybe for later
+		// Maybe for later
 		// const groupChannels = /^\/eos\/out\/get\/group\/([\d\.]+)\/channels\/list\/([\d\.]+)/([\d\.]+)$/
-
 
 		// This is the raw OSC message, but we are getting something parsed already...
 		// const enc_wheel      = /^\/eos\/out\/active\/wheel\/(\d+),\s*(\w+)\s*\[(\w+)\]\(s\).\s+(\d+)\(i\),\s*([\d.]*)\(f\)$/
 		const enc_wheel = /^\/eos\/out\/active\/wheel\/(\d+)/
 
-		this.oscSocket.on('message', (message, self ) => {
+		this.oscSocket.on('message', (message, self) => {
 			if (this.debugToLogger) {
 				this.log('debug', `Eos OSC message: ${message.address}`)
 				this.log('debug', `  Eos OSC message args: ${JSON.stringify(message.args)}`)
@@ -278,7 +280,7 @@ class ModuleInstance extends InstanceBase {
 
 			let matches
 
-			if (matches = message.address.match(cueActive)) {
+			if ((matches = message.address.match(cueActive))) {
 				this.setInstanceStates(
 					{
 						cue_active_list: matches[1],
@@ -298,11 +300,11 @@ class ModuleInstance extends InstanceBase {
 					true
 				)
 				this.checkFeedbacks('pending_cue')
-			} else if (message.address === cuePendingOut && message.args.length == 0 ) {
+			} else if (message.address === cuePendingOut && message.args.length == 0) {
 				this.setInstanceStates(
 					{
-					cue_pending_list: '',
-					cue_pending_num: '',
+						cue_pending_list: '',
+						cue_pending_num: '',
 					},
 					true
 				)
@@ -317,11 +319,11 @@ class ModuleInstance extends InstanceBase {
 					true
 				)
 				this.checkFeedbacks('previous_cue')
-			} else if (message.address === cuePreviousOut && message.args.length == 0 ) {
+			} else if (message.address === cuePreviousOut && message.args.length == 0) {
 				this.setInstanceStates(
 					{
-					cue_previous_list: '',
-					cue_previous_num: '',
+						cue_previous_list: '',
+						cue_previous_num: '',
 					},
 					true
 				)
@@ -371,45 +373,47 @@ class ModuleInstance extends InstanceBase {
 						this.requestFullState()
 						this.lastActChan = actChan
 					}
-				} else if ( this.lastActChan != 0 ) {
+				} else if (this.lastActChan != 0) {
 					// No channel active, clear out encoders, set lastActChan
 					// to zero so we don't keep looping on this. Initially set to -1
 					this.emptyEncVariables()
 					this.requestFullState()
 					this.lastActChan = 0
 				}
-            } else if ((matches = message.address.match(groupUpdated))) {
-                // A group was updated, request new title
-                // This is not the group number but the index number
-                // let group_num = matches[1]
-                // This is the group number that had a change (possibly a list??)
-                let group_num = message.args[1].value
-                // Only watching "this.howManyGroupLabels" groups - this maybe should be a global constant or something
-                if ( group_num <= this.howManyGroupLabels ) {
-                    // this.sendOsc('/eos/get/group/index', [ { type: 'i', value: group_num } ], false)
-                    this.sendOsc('/eos/get/group', [ { type: 'i', value: group_num } ], false)
-                    // this.log('warn', `Eos: Neet to update group info: ${JSON.stringify(group_num)}`)
-                }
-            } else if ((matches = message.address.match(groupLabel))) {
-                let group_num = matches[1]
-                // this.log('warn', `Eos: Capture group info: ${JSON.stringify(message)}`)
-                // this.log('warn', `Eos: Captured value for Group ${group_num} (group_label_${group_num}): ${message.args[2].value}`)
-                let group_label = message.args[2].value || ''
-                if ( group_label ) {
-                    this.setInstanceStates( {
-                        [`group_label_${group_num}`]: message.args[2].value,
-                        },
-                        true
-                    )
-                }
-            } else if ((matches = message.address.match(groupNull))) {
-                let group_num = matches[1]
-                this.setInstanceStates( {
-                    [`group_label_${group_num}`]: '',
-                    },
-                    true
-                )
-			} else if ( message.address === colorhs ) {
+			} else if ((matches = message.address.match(groupUpdated))) {
+				// A group was updated, request new title
+				// This is not the group number but the index number
+				// let group_num = matches[1]
+				// This is the group number that had a change (possibly a list??)
+				let group_num = message.args[1].value
+				// Only watching "this.howManyGroupLabels" groups - this maybe should be a global constant or something
+				if (group_num <= this.howManyGroupLabels) {
+					// this.sendOsc('/eos/get/group/index', [ { type: 'i', value: group_num } ], false)
+					this.sendOsc('/eos/get/group', [{ type: 'i', value: group_num }], false)
+					// this.log('info', `Eos: Need to update group info: ${JSON.stringify(group_num)}`)
+				}
+			} else if ((matches = message.address.match(groupLabel))) {
+				let group_num = matches[1]
+				// this.log('info', `Eos: Capture group info: ${JSON.stringify(message)}`)
+				// this.log('info', `Eos: Captured value for Group ${group_num} (group_label_${group_num}): ${message.args[2].value}`)
+				let group_label = message.args[2].value || ''
+				if (group_label) {
+					this.setInstanceStates(
+						{
+							[`group_label_${group_num}`]: message.args[2].value,
+						},
+						true
+					)
+				}
+			} else if ((matches = message.address.match(groupNull))) {
+				let group_num = matches[1]
+				this.setInstanceStates(
+					{
+						[`group_label_${group_num}`]: '',
+					},
+					true
+				)
+			} else if (message.address === colorhs) {
 				// this.log('debug', `HS: ${hue} ${sat}`)
 				this.setInstanceStates(
 					{
@@ -470,15 +474,15 @@ class ModuleInstance extends InstanceBase {
 					// into category sets. If we get a new one, clear and restart
 					// that timer. We don't know how many wheels, so this is a best
 					// guess way of knowing when to process them all into groups.
-					if ( this.readingWheels == false ) {
+					if (this.readingWheels == false) {
 						this.readingWheels = true
 						// property, intentionally no 'let'
-						wheelTimer = setTimeout( this.doCategoryWheels, 100, this )
+						wheelTimer = setTimeout(this.doCategoryWheels, 100, this)
 					} else {
 						// cancel and restart timer waiting for next value
-						clearTimeout( wheelTimer )
+						clearTimeout(wheelTimer)
 						// cancelTimeout( wheelTimer )
-						wheelTimer = setTimeout( this.doCategoryWheels, 100, this )
+						wheelTimer = setTimeout(this.doCategoryWheels, 100, this)
 					}
 				}
 			}
@@ -502,56 +506,58 @@ class ModuleInstance extends InstanceBase {
 	 * Assemble catXX_wheel_* variables after last wheel
 	 * parameter received.
 	 **/
-	 doCategoryWheels( self ) {
-		let variableDefinitions = GetVariableDefinitions( self )
+	doCategoryWheels(self) {
+		let variableDefinitions = GetVariableDefinitions(self)
 		let updateDefs = {}
 		let catWheels = []
 
 		// if we got here, we assume we are done with the batch of wheel info
 		self.readingWheels = false
 
-		self.wheels.forEach ( function (wheelobj, index, arr, self ) {
-			if ( ! catWheels[ wheelobj.cat ] ) {
-				catWheels[ wheelobj.cat ] = []
+		self.wheels.forEach(function (wheelobj, index, arr, self) {
+			if (!catWheels[wheelobj.cat]) {
+				catWheels[wheelobj.cat] = []
 			}
-			catWheels[ wheelobj.cat ].push( index )
+			catWheels[wheelobj.cat].push(index)
 		})
 		// Loop through categories 0-6
-		for( let i=0; i <= 6; i++ ) {
+		for (let i = 0; i <= 6; i++) {
 			// nothing in this category
-			if ( ! catWheels[i] ) {
+			if (!catWheels[i]) {
 				updateDefs[`wheel_cat${i}_count`] = 0
 			} else {
 				// for( let j=0; j < this.wheelsPerCategory; j++) {
-				for ( let j=0; j < Math.min( catWheels[i].length, self.wheelsPerCategory ); j++ ) {
-					updateDefs[`cat${i}_wheel_${j+1}_label`] = self.wheels[ catWheels[i][j] ].label
-					updateDefs[`cat${i}_wheel_${j+1}_stringval`] = self.wheels[ catWheels[i][j] ].stringval
-					updateDefs[`cat${i}_wheel_${j+1}_floatval`] = self.wheels[ catWheels[i][j]].floatval
-					let eosCmd = self.wheels[ catWheels[i][j] ].label
-					if( eosCmd && eosCmd != '' ) {
-						eosCmd = eosCmd.replace( / /g, '_').replace(/\//g, '\\')
+				for (let j = 0; j < Math.min(catWheels[i].length, self.wheelsPerCategory); j++) {
+					updateDefs[`cat${i}_wheel_${j + 1}_label`] = self.wheels[catWheels[i][j]].label
+					updateDefs[`cat${i}_wheel_${j + 1}_stringval`] = self.wheels[catWheels[i][j]].stringval
+					updateDefs[`cat${i}_wheel_${j + 1}_floatval`] = self.wheels[catWheels[i][j]].floatval
+					let eosCmd = self.wheels[catWheels[i][j]].label
+					if (eosCmd && eosCmd != '') {
+						eosCmd = eosCmd.replace(/ /g, '_').replace(/\//g, '\\')
 						eosCmd = eosCmd.toLowerCase()
 					} else {
 						eosCmd = ''
 					}
-					updateDefs[`cat${i}_wheel_${j+1}_oscname`] = eosCmd
+					updateDefs[`cat${i}_wheel_${j + 1}_oscname`] = eosCmd
 				}
 				updateDefs[`cat${i}_wheel_count`] = catWheels[i].length
 			}
 		}
 		self.setVariableValues(updateDefs)
-	 }
+	}
 
 	/**
 	 * Reset our internal variables
 	 */
 	emptyEncVariables() {
-		let variableDefinitions = GetVariableDefinitions( this )
+		let variableDefinitions = GetVariableDefinitions(this)
 		let updateDefs = {}
 		variableDefinitions.forEach(function (varDef) {
-			if (varDef['variableId'].startsWith('enc_')
-					// || varDef['variableId'].startsWith('wheel_') // deprecated
-					|| /^cat\d_/.test(varDef['variableId']) ) {
+			if (
+				varDef['variableId'].startsWith('enc_') ||
+				// || varDef['variableId'].startsWith('wheel_') // deprecated
+				/^cat\d_/.test(varDef['variableId'])
+			) {
 				updateDefs[varDef['variableId']] = ''
 			}
 		}, this)
@@ -569,17 +575,17 @@ class ModuleInstance extends InstanceBase {
 		this.sendOsc('/eos/reset', [], false)
 
 		// Switch to the correct user_id.
-		this.sendOsc('/eos/user', [ { type: 'i', value: this.config.user_id } ], false)
-        
-        // Turn on subscription for show file event updates
-        this.sendOsc('/eos/subscribe', [ { type: 'i', value: 1 } ], false)
-        
-        // Get xx groups worth of labels - issue the request here to get the values,
-        // they are caught in the on.message elsewhere
-        for ( let i=1; i <= this.howManyGroupLabels; i++ ) {
-            // this.sendOsc('/eos/get/group/index', [ { type: 'i', value: i } ], false)
-            this.sendOsc('/eos/get/group', [ { type: 'i', value: i } ], false)
-        }
+		this.sendOsc('/eos/user', [{ type: 'i', value: this.config.user_id }], false)
+
+		// Turn on subscription for show file event updates
+		this.sendOsc('/eos/subscribe', [{ type: 'i', value: 1 }], false)
+
+		// Get xx groups worth of labels - issue the request here to get the values,
+		// they are caught in the on.message elsewhere
+		for (let i = 1; i <= this.howManyGroupLabels; i++) {
+			// this.sendOsc('/eos/get/group/index', [ { type: 'i', value: i } ], false)
+			this.sendOsc('/eos/get/group', [{ type: 'i', value: i }], false)
+		}
 	}
 
 	/**
@@ -611,7 +617,7 @@ class ModuleInstance extends InstanceBase {
 		//
 		// If the CUE value is " 0.0" then reset active cue list/number
 		const cuematch =
-			/^(?<CUE_NUMBER>[\d\.]+\/[\d\.]+|[\d\.]+)?(?<CUEWLIST>\/[\d\.]+)?( (?<LABEL>.*?))? (?<DURATION>[\d\.]+)( (?<INTENSITY>[\d\.]+%))?$/
+			/^(?<CUE_NUMBER>[\d\.]+\/[\d\.]+|[\d\.]+)?(?<CUE_LIST>\/[\d\.]+)?( (?<LABEL>.*?))? (?<DURATION>[\d\.]+)( (?<INTENSITY>[\d\.]+%))?$/
 		let matches = cueName.match(cuematch)
 
 		if (matches !== null && matches.length >= 6) {
@@ -635,16 +641,12 @@ class ModuleInstance extends InstanceBase {
 				true
 			)
 		}
-		// Clear out when active cue is no longer activve
-		if ( "active" == type &&
-		       ( " 0.0 " == cueName.substring(0,5)
-				||
-				"" == cueName )
-	    	) {
+		// Clear out when active cue is no longer active
+		if ('active' == type && (' 0.0 ' == cueName.substring(0, 5) || '' == cueName)) {
 			this.setInstanceStates(
 				{
-				cue_active_list: '',
-				cue_active_num: '',
+					cue_active_list: '',
+					cue_active_num: '',
 				},
 				true
 			)
@@ -673,7 +675,7 @@ class ModuleInstance extends InstanceBase {
 		}
 
 		if (this.debugToLogger) {
-			this.log('warn', `Eos: Sending packet: ${JSON.stringify(packet)}`)
+			this.log('info', `Eos: Sending packet: ${JSON.stringify(packet)}`)
 		}
 
 		this.oscSocket.send(packet)
@@ -704,10 +706,10 @@ class ModuleInstance extends InstanceBase {
 
 	getDistinctParamForWheelLabel(wheel_label) {
 		let distinctparam = ''
-		if ( wheel_label != null && wheel_label != '' ) {
+		if (wheel_label != null && wheel_label != '') {
 			let lc_wheel_label = wheel_label.toLowerCase()
-			if ( lc_wheel_label in ParamMap ) {
-				distinctparam = ParamMap[ lc_wheel_label ]
+			if (lc_wheel_label in ParamMap) {
+				distinctparam = ParamMap[lc_wheel_label]
 			}
 		}
 		return distinctparam

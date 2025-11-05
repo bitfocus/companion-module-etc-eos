@@ -109,7 +109,7 @@ _Soft keys 7-12 are the alternates available when you toggle the {More SK} butto
 
 These parameters are reported when working with a fixture. You must select the fixture by typing its number on the command line. If using next/last or other methods the EOS software does not consistently send updates on the values.
 
-All of these variables are availabe in a string (integer) and a floating point format. Just append _stringval or _floatval to the end of the base name in the list below:
+All of these variables are available in a string (integer) and a floating point format. Just append \_stringval or \_floatval to the end of the base name in the list below:
 
 ```
 enc_intensity
@@ -226,28 +226,28 @@ enc_cie_y_8
 
 ## Wheels - By category
 
-The encoder wheels are also availble by category:
+The encoder wheels are also available by category:
 
-| Category# | Description         |
-| --------- | ------------------- |
-| 0         | Uncategorized       |
-| 1         | Intensity           |
-| 2         | Focus               |
-| 3         | Color               |
-| 4         | Image               |
-| 5         | Form                |
-| 6         | Shutter             |
+| Category# | Description   |
+| --------- | ------------- |
+| 0         | Uncategorized |
+| 1         | Intensity     |
+| 2         | Focus         |
+| 3         | Color         |
+| 4         | Image         |
+| 5         | Form          |
+| 6         | Shutter       |
 
 Each category will have its own set of encoder wheels depending on
 the fixture selected
 
-| Variable                     | Description                            |
-| ---------------------------- | -------------------------------------- |
-| catX_wheel_count             | How many wheels are in this category   |
-| catX_wheel_Y_label           | Label for Wheel Y of Category X        |
-| catX_wheel_Y_stringval       | String/Int for Wheel Y of Category X   |
-| catX_wheel_Y_floatval        | Float value for Wheel Y or Category X  |
-| catX_wheel_Y_oscname         | OSC path value (from label)            |
+| Variable               | Description                           |
+| ---------------------- | ------------------------------------- |
+| catX_wheel_count       | How many wheels are in this category  |
+| catX_wheel_Y_label     | Label for Wheel Y of Category X       |
+| catX_wheel_Y_stringval | String/Int for Wheel Y of Category X  |
+| catX_wheel_Y_floatval  | Float value for Wheel Y or Category X |
+| catX_wheel_Y_oscname   | OSC path value (from label)           |
 
 There is a sample Stream Deck + configuration file in the github repository that demonstrates how this can be used effectively to manage all encoders on a single Stream Deck + page.
 
@@ -258,7 +258,6 @@ To allow the use of buttons to select groups, and capture the group label for us
 Currently the first 30 groups are captured:
 
 group_label_1 through group_label_30
-
 
 ## Feedbacks
 
