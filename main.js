@@ -24,8 +24,6 @@ class ModuleInstance extends InstanceBase {
 		this.eos_port = this.config.use_slip ? constants.EOS_PORT_SLIP : constants.EOS_PORT
 		this.readingWheels = false
 
-		// how many groups to get labels for
-		this.howManyGroupLabels = constants.NUM_GROUP_LABELS //30
 
 		// Wheel information as module only variables, not exposed
 		this.wpc = constants.WHEELS_PER_CAT // 64
@@ -41,6 +39,8 @@ class ModuleInstance extends InstanceBase {
 		this.oscSocket = this.getOsc10Socket(this.config.host, this.eos_port)
 		this.setOscSocketListeners()
 		this.startReconnectTimer()
+		
+		this.debugCallToSetVariableCnt = 0
 	}
 
 	// Empty wheel data
@@ -211,6 +211,7 @@ class ModuleInstance extends InstanceBase {
 		}
 
 		if (isVariable) {
+			this.debugCallToSetVariableCnt++
 			this.setVariableValues(values)
 		}
 	}
@@ -261,11 +262,11 @@ class ModuleInstance extends InstanceBase {
 		const softkey = /^\/eos\/out\/softkey\/(\d+)$/
 		const cmd = /^\/eos\/out\/user\/(\d+)\/cmd$/
 		const chan = '/eos/out/active/chan'
-		const groupUpdated = /^\/eos\/out\/notify\/group\/list\/([\d\.]+)\/([\d\.]+)$/
-		const groupLabel = /^\/eos\/out\/get\/group\/([\d\.]+)\/list\/([\d\.]+)\/([\d\.]+)$/
 		const groupNull = /^\/eos\/out\/get\/group\/([\d\.]+)$/
 		const colorhs = '/eos/out/color/hs'
-
+		const labels = /^\/eos\/out\/get\/(group|preset|macro)\/([\d\.]+)\/list\/([\d\.]+)\/([\d\.]+)$/
+		const labelsUpdated = /^\/eos\/out\/notify\/(group|preset|macro)\/list\/([\d\.]+)\/([\d\.]+)$/
+		
 		// Maybe for later
 		// const groupChannels = /^\/eos\/out\/get\/group\/([\d\.]+)\/channels\/list\/([\d\.]+)/([\d\.]+)$/
 
@@ -405,27 +406,29 @@ class ModuleInstance extends InstanceBase {
 					this.requestFullState()
 					this.lastActChan = 0
 				}
-			} else if ((matches = message.address.match(groupUpdated))) {
-				// A group was updated, request new title
-				// This is not the group number but the index number
-				// let group_num = matches[1]
-				// This is the group number that had a change (possibly a list??)
-				let group_num = message.args[1].value
-				// Only watching "this.howManyGroupLabels" groups - this maybe should be a global constant or something
-				if (group_num <= this.howManyGroupLabels) {
+			} 
+			
+			 else if ((matches = message.address.match(labelsUpdated))) {
+				// A label was updated, request new title
+				let label_type = matches[1]
+				let label_num = message.args[1].value
+				// Only watching "constans.LABEL_NUM 
+				if (label_num_num <= constants.NUM_LABELS) {
+					let message = `/eos/get/${label_type}`
 					// this.sendOsc('/eos/get/group/index', [ { type: 'i', value: group_num } ], false)
-					this.sendOsc('/eos/get/group', [{ type: 'i', value: group_num }], false)
+					this.sendOsc(message, [{ type: 'i', value: label_num }], false)
 					// this.log('info', `Eos: Need to update group info: ${JSON.stringify(group_num)}`)
 				}
-			} else if ((matches = message.address.match(groupLabel))) {
-				let group_num = matches[1]
-				// this.log('info', `Eos: Capture group info: ${JSON.stringify(message)}`)
-				// this.log('info', `Eos: Captured value for Group ${group_num} (group_label_${group_num}): ${message.args[2].value}`)
-				let group_label = message.args[2].value || ''
-				if (group_label) {
+			} else if ((matches = message.address.match(labels))) {
+				let label_type = matches[1]// group, macro, preset , …
+				let label_num = matches[2]
+				this.log('info', `Eos: Capture group info: ${JSON.stringify(message)}`)
+				this.log('info', `Eos: Captured value for ${label_type} ${label_num} (${label_type}_label_${label_num}): ${message.args[2].value}`)
+				let label_string = message.args[2].value || ''
+				if (label_string) {
 					this.setInstanceStates(
 						{
-							[`group_label_${group_num}`]: message.args[2].value,
+							[`${label_type}_label_${label_num}`]: label_string,
 						},
 						true
 					)
@@ -591,6 +594,20 @@ class ModuleInstance extends InstanceBase {
 	}
 
 	/**
+	 * Request Label names from console
+	 * **/
+	getLabelNames(){
+		for (let name = 0; name < constants.LABEL_NAMES.length; name++) {
+			const element = constants.LABEL_NAMES[name];
+			for (let i = 0; i <=constants.NUM_LABELS; i++) {
+				const message = `/eos/get/${element}`
+				// this.sendOsc('/eos/get/group/index', [ { type: 'i', value: i } ], false)
+				this.sendOsc(message, [{ type: 'i', value: i }], false)
+			}
+		}
+	}
+
+	/**
 	 * Empties the state (variables/feedbacks) and requests the current state from the console.
 	 */
 	requestFullState() {
@@ -609,10 +626,7 @@ class ModuleInstance extends InstanceBase {
 
 		// Get xx groups worth of labels - issue the request here to get the values,
 		// they are caught in the on.message elsewhere
-		for (let i = 1; i <= this.howManyGroupLabels; i++) {
-			// this.sendOsc('/eos/get/group/index', [ { type: 'i', value: i } ], false)
-			this.sendOsc('/eos/get/group', [{ type: 'i', value: i }], false)
-		}
+		this.getLabelNames()
 	}
 
 	/**
