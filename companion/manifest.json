@@ -3,19 +3,15 @@
 	"name": "etc-eos-2",
 	"shortname": "etc-eos-2",
 	"description": "Interface to the ETC EOS lighting system",
-	"version": "0.0.0",
+	"version": "0.0.1",
 	"license": "MIT",
-	"repository": "git+https://github.com/bitfocus/companion-module-etc-eos.git",
-	"bugs": "https://github.com/bitfocus/companion-module-etc-eos/issues",
+	"repository": "git+https://github.com/NRossmann/companion-module-etc-eos.git",
+	"bugs": "https://github.com/NRossmann/companion-module-etc-eos/issues",
 	"maintainers": [
 		{
-			"name": "Steve Therrien",
-			"email": "git@stevetherrien.ca"
+			"name": "Nic Rossmann",
+			"email": "nrossmann@gmx.de"
 		},
-		{
-			"name": "Steve Palm",
-			"email": "n9yty@n9yty.com"
-		}
 	],
 	"runtime": {
 		"type": "node18",
