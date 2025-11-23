@@ -3,7 +3,7 @@
 	"name": "etc-eos-2",
 	"shortname": "etc-eos-2",
 	"description": "Interface to the ETC EOS lighting system",
-	"version": "0.0.1",
+	"version": "0.0.0",
 	"license": "MIT",
 	"repository": "git+https://github.com/NRossmann/companion-module-etc-eos.git",
 	"bugs": "https://github.com/NRossmann/companion-module-etc-eos/issues",
@@ -11,7 +11,7 @@
 		{
 			"name": "Nic Rossmann",
 			"email": "nrossmann@gmx.de"
-		},
+		}
 	],
 	"runtime": {
 		"type": "node18",
