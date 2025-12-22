@@ -21,7 +21,16 @@ class ModuleInstance extends InstanceBase {
 		this.debugToLogger = true
 
 		this.lastActChan = -1
-		this.eos_port = this.config.use_slip ? constants.EOS_PORT_SLIP : constants.EOS_PORT
+		// Auto-detect: try all combinations of port and SLIP
+		this.connectionModes = [
+			{ port: constants.EOS_PORT_SLIP, useSlip: true, label: 'Port 3037 with SLIP' },
+			{ port: constants.EOS_PORT_SLIP, useSlip: false, label: 'Port 3037 without SLIP' },
+			{ port: constants.EOS_PORT, useSlip: true, label: 'Port 3032 with SLIP' },
+			{ port: constants.EOS_PORT, useSlip: false, label: 'Port 3032 without SLIP' },
+		]
+		this.currentModeIndex = 0
+		this.eos_port = this.connectionModes[0].port
+		this.use_slip = this.connectionModes[0].useSlip
 		this.readingWheels = false
 
         // how many groups to get labels for
@@ -72,17 +81,14 @@ class ModuleInstance extends InstanceBase {
 	async configUpdated(config) {
 		let currentHost = this.config.host
 		let currentUserId = this.config.user_id
-		let currentUseSlip = this.config.use_slip
 
 		this.config = config
 
 		if (
 			currentHost !== this.config.host ||
-			currentUserId !== this.config.user_id ||
-			currentUseSlip !== this.config.use_slip
+			currentUserId !== this.config.user_id
 		) {
 			this.closeOscSocket()
-			this.eos_port = this.config.use_slip ? constants.EOS_PORT_SLIP : constants.EOS_PORT
 			await this.init(config)
 		}
 	}
@@ -115,7 +121,6 @@ class ModuleInstance extends InstanceBase {
 				max: 65535,
 				required: true,
 			},
-*/
 			{
 				type: 'checkbox',
 				id: 'use_slip',
@@ -123,6 +128,7 @@ class ModuleInstance extends InstanceBase {
 				default: false,
 				required: true,
 			},
+			*/
 		]
 	}
 
@@ -179,12 +185,16 @@ class ModuleInstance extends InstanceBase {
 
 	/**
 	 * Watches for disconnects and reconnects to the console.
+	 * Automatically detects the correct port and SLIP setting by trying all combinations.
 	 */
 	startReconnectTimer() {
 		if (this.reconnectTimer !== undefined) {
 			// Timer is already running.
 			return
 		}
+
+		this.failedConnectionAttempts = 0
+		this.lastConnectionAttemptTime = 0
 
 		this.reconnectTimer = setInterval(() => {
 			if (!this.oscSocket || !this.oscSocket.socket) {
@@ -194,7 +204,32 @@ class ModuleInstance extends InstanceBase {
 
 			if (this.oscSocket.socket.readyState === 'open') {
 				// Already connected. Nothing to do.
+				this.failedConnectionAttempts = 0
 				return
+			}
+
+			// Track failed connection attempts to cycle through all port/SLIP combinations
+			const now = Date.now()
+			if (now - this.lastConnectionAttemptTime > 5000) {
+				this.failedConnectionAttempts++
+				this.lastConnectionAttemptTime = now
+
+				// After 2 failed attempts (10 seconds), try next combination
+				if (this.failedConnectionAttempts >= 2) {
+					// Move to next mode in the list
+					this.currentModeIndex = (this.currentModeIndex + 1) % this.connectionModes.length
+					const nextMode = this.connectionModes[this.currentModeIndex]
+					
+					this.log('info', `Connection failed, trying: ${nextMode.label}`)
+					this.use_slip = nextMode.useSlip
+					this.eos_port = nextMode.port
+					this.failedConnectionAttempts = 0
+					
+					// Close old socket and create new one with different settings
+					this.closeOscSocket()
+					this.oscSocket = this.getOsc10Socket(this.config.host, this.eos_port)
+					this.setOscSocketListeners()
+				}
 			}
 
 			// Re-open the TCP socket
@@ -226,7 +261,7 @@ class ModuleInstance extends InstanceBase {
 		let oscTcp = new OSC10.TCPSocketPort({
 			address: address,
 			port: port,
-			useSLIP: this.config.use_slip,
+			useSLIP: this.use_slip,
 			metadata: true,
 		})
 
