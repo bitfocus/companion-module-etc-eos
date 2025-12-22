@@ -304,7 +304,7 @@ class ModuleInstance extends InstanceBase {
         const colorhs = '/eos/out/color/hs'
 		const macroLabel = /^\/eos\/out\/get\/macro\/(\d+)\/list\/(\d+)\/(\d+)$/
 		const macroUpdated = /^\/eos\/out\/notify\/macro\/list\/([\d\.]+)\/([\d\.]+)$/
-		const macroFired = /^\/eos\/out\/event\/macro\/fire\/(\d+)$/
+		const macroFired = /^\/eos\/out\/event\/macro\/(\d+)$/
 
 		// Maybe for later
 		// const groupChannels = /^\/eos\/out\/get\/group\/([\d\.]+)\/channels\/list\/([\d\.]+)/([\d\.]+)$/
