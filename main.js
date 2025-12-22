@@ -304,6 +304,7 @@ class ModuleInstance extends InstanceBase {
         const colorhs = '/eos/out/color/hs'
 		const macroLabel = /^\/eos\/out\/get\/macro\/(\d+)\/list\/(\d+)\/(\d+)$/
 		const macroUpdated = /^\/eos\/out\/notify\/macro\/list\/([\d\.]+)\/([\d\.]+)$/
+		const macroFired = /^\/eos\/out\/event\/macro\/(\d+)$/
 
 		// Maybe for later
 		// const groupChannels = /^\/eos\/out\/get\/group\/([\d\.]+)\/channels\/list\/([\d\.]+)/([\d\.]+)$/
@@ -489,6 +490,30 @@ class ModuleInstance extends InstanceBase {
                         true
                     )
                 }
+            } else if ((matches = message.address.match(macroFired))) {
+                // Macro was fired/triggered
+                let macro_num = matches[1]
+                this.log('info', `Macro ${macro_num} fired!`)
+                this.setInstanceStates(
+                    {
+                        macro_fired: macro_num,
+                    },
+                    false
+                )
+                this.log('debug', `macro_fired state set to: ${macro_num}`)
+                this.checkFeedbacks('macro_fired')
+                
+                // Clear the macro_fired state after 1 second
+                setTimeout(() => {
+                    this.setInstanceStates(
+                        {
+                            macro_fired: null,
+                        },
+                        false
+                    )
+                    this.log('debug', `macro_fired state cleared`)
+                    this.checkFeedbacks('macro_fired')
+                }, 1000)
             } else if ((matches = message.address.match(groupNull))) {
                 let group_num = matches[1]
                 this.setInstanceStates(
