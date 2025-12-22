@@ -3,5 +3,5 @@ exports.NUM_GROUP_LABELS = 30,
 exports.NUM_SOFTKEYS = 12,
 exports.EOS_PORT = 3032,
 exports.EOS_PORT_SLIP = 3037,
-exports.NUM_MACRO_LABELS = 32,
-exports.NUM_MACRO_START = 31001;
+exports.NUM_MACRO_LABELS = 200,
+exports.NUM_MACRO_START = 2001;
