@@ -184,7 +184,6 @@ module.exports = function (self) {
 					type: 'textinput',
 					label: 'Macro',
 					default: '1',
-					regex: Regex.FLOAT_OR_INT,
 					useVariables: true,
 				},
 			],
