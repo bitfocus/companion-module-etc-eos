@@ -184,13 +184,35 @@ module.exports = function (self) {
 					type: 'textinput',
 					label: 'Macro',
 					default: '1',
-					regex: Regex.FLOAT_OR_INT,
 					useVariables: true,
 				},
 			],
 			callback: async (event, context) => {
-				const macro = await context.parseVariablesInString(event.options.macro)
-				self.sendOsc('macro/fire', [{ type: 'i', value: Number(macro) }])
+				const macroStr = await context.parseVariablesInString(event.options.macro)
+				self.log('debug', `run_macro: input="${event.options.macro}", parsed="${macroStr}"`)
+				
+				let macroNum = Number(macroStr)
+				
+				// If not a valid number, try to evaluate as math expression
+				if (isNaN(macroNum)) {
+					try {
+						// Safely evaluate simple math expressions
+						const sanitized = macroStr.replace(/[^0-9+\-*/(). ]/g, '')
+						macroNum = eval(sanitized)
+						self.log('debug', `run_macro: evaluated expression "${macroStr}" to ${macroNum}`)
+					} catch (e) {
+						self.log('warn', `run_macro: Invalid macro number "${macroStr}" from input "${event.options.macro}"`)
+						return
+					}
+				}
+				
+				if (isNaN(macroNum)) {
+					self.log('warn', `run_macro: Invalid macro number "${macroStr}" from input "${event.options.macro}"`)
+					return
+				}
+				
+				self.log('debug', `run_macro: sending macro ${macroNum}`)
+				self.sendOsc('macro/fire', [{ type: 'i', value: Math.floor(macroNum) }])
 			},
 		},
 		press_key: {
