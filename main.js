@@ -493,12 +493,14 @@ class ModuleInstance extends InstanceBase {
             } else if ((matches = message.address.match(macroFired))) {
                 // Macro was fired/triggered
                 let macro_num = matches[1]
+                this.log('info', `Macro ${macro_num} fired!`)
                 this.setInstanceStates(
                     {
                         macro_fired: macro_num,
                     },
                     false
                 )
+                this.log('debug', `macro_fired state set to: ${macro_num}`)
                 this.checkFeedbacks('macro_fired')
                 
                 // Clear the macro_fired state after 1 second
@@ -509,6 +511,7 @@ class ModuleInstance extends InstanceBase {
                         },
                         false
                     )
+                    this.log('debug', `macro_fired state cleared`)
                     this.checkFeedbacks('macro_fired')
                 }, 1000)
             } else if ((matches = message.address.match(groupNull))) {

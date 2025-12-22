@@ -133,7 +133,9 @@ module.exports = function (self) {
 				},
 			],
 			callback: (feedback) => {
-				return feedback.options.macro === self.instanceState['macro_fired']
+				const result = feedback.options.macro === self.instanceState['macro_fired']
+				self.log('debug', `macro_fired feedback check: expected=${feedback.options.macro}, actual=${self.instanceState['macro_fired']}, result=${result}`)
+				return result
 			},
 		},
 	})
