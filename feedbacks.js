@@ -115,5 +115,26 @@ module.exports = function (self) {
 				return feedback.options.connected === self.instanceState['connected']
 			},
 		},
+		macro_fired: {
+			type: 'boolean',
+			name: 'When macro is fired',
+			description: "Changes the button's style when this macro is triggered.",
+			defaultStyle: {
+				bgcolor: combineRgb(255, 0, 0),
+				color: combineRgb(255, 255, 255),
+			},
+			options: [
+				{
+					id: 'macro',
+					type: 'textinput',
+					label: 'Macro Number',
+					default: '1',
+					regex: Regex.NUMBER,
+				},
+			],
+			callback: (feedback) => {
+				return feedback.options.macro === self.instanceState['macro_fired']
+			},
+		},
 	})
 }
