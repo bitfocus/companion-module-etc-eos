@@ -188,8 +188,17 @@ module.exports = function (self) {
 				},
 			],
 			callback: async (event, context) => {
-				const macro = await context.parseVariablesInString(event.options.macro)
-				self.sendOsc('macro/fire', [{ type: 'i', value: Number(macro) }])
+				const macroStr = await context.parseVariablesInString(event.options.macro)
+				self.log('debug', `run_macro: input="${event.options.macro}", parsed="${macroStr}"`)
+				
+				const macroNum = Number(macroStr)
+				if (isNaN(macroNum)) {
+					self.log('warn', `run_macro: Invalid macro number "${macroStr}" from input "${event.options.macro}"`)
+					return
+				}
+				
+				self.log('debug', `run_macro: sending macro ${macroNum}`)
+				self.sendOsc('macro/fire', [{ type: 'i', value: macroNum }])
 			},
 		},
 		press_key: {
