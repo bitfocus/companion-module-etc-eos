@@ -52,9 +52,14 @@ class ModuleInstance extends InstanceBase {
 		this.updateVariableDefinitions() // export variable definitions
 		this.updatePresets() // export presets
 
+		this.lastMessageReceived = Date.now()
+		this.heartbeatInterval = null
+		this.heartbeatTimeout = 30000 // 30 seconds without message = disconnect
+		
 		this.oscSocket = this.getOsc10Socket(this.config.host, this.eos_port)
 		this.setOscSocketListeners()
 		this.startReconnectTimer()
+		this.startHeartbeat()
 	}
 
 	// Empty wheel data
@@ -74,6 +79,12 @@ class ModuleInstance extends InstanceBase {
 		if (this.reconnectTimer !== undefined) {
 			clearInterval(this.reconnectTimer)
 			delete this.reconnectTimer
+		}
+
+		// Clear the heartbeat timer if it exists.
+		if (this.heartbeatInterval !== undefined) {
+			clearInterval(this.heartbeatInterval)
+			delete this.heartbeatInterval
 		}
 
 		// Close the socket.
@@ -271,17 +282,23 @@ class ModuleInstance extends InstanceBase {
 
 		this.reconnectTimer = setInterval(() => {
 			if (!this.oscSocket || !this.oscSocket.socket) {
-				// Socket not valid
+				// Socket not valid, create new one
+				this.log('info', 'Socket invalid, creating new connection')
+				this.oscSocket = this.getOsc10Socket(this.config.host, this.eos_port)
+				this.setOscSocketListeners()
 				return
 			}
 
-			if (this.oscSocket.socket.readyState === 'open') {
+			const socketState = this.oscSocket.socket.readyState
+			
+			if (socketState === 'open') {
 				// Already connected. Nothing to do.
 				this.failedConnectionAttempts = 0
 				return
 			}
 
-			// Track failed connection attempts to cycle through all port/SLIP combinations
+			// Socket is not open (closed, closing, or connecting)
+			// Always create a new socket instead of trying to reuse
 			const now = Date.now()
 			if (now - this.lastConnectionAttemptTime > 5000) {
 				this.failedConnectionAttempts++
@@ -297,16 +314,14 @@ class ModuleInstance extends InstanceBase {
 					this.use_slip = nextMode.useSlip
 					this.eos_port = nextMode.port
 					this.failedConnectionAttempts = 0
-					
-					// Close old socket and create new one with different settings
-					this.closeOscSocket()
-					this.oscSocket = this.getOsc10Socket(this.config.host, this.eos_port)
-					this.setOscSocketListeners()
 				}
+				
+				// Always close old socket and create new one
+				this.log('debug', `Attempting reconnect with: ${this.connectionModes[this.currentModeIndex].label}`)
+				this.closeOscSocket()
+				this.oscSocket = this.getOsc10Socket(this.config.host, this.eos_port)
+				this.setOscSocketListeners()
 			}
-
-			// Re-open the TCP socket
-			this.oscSocket.socket.connect(this.eos_port, this.config.host)
 		}, 5000)
 	}
 
@@ -337,6 +352,11 @@ class ModuleInstance extends InstanceBase {
 			useSLIP: this.use_slip,
 			metadata: true,
 		})
+
+		// Enable TCP keepalive to detect dead connections
+		if (oscTcp.socket) {
+			oscTcp.socket.setKeepAlive(true, 10000) // Send keepalive every 10 seconds
+		}
 
 		// Return the OSC 1.0 TCP connection.
 		return oscTcp
@@ -387,6 +407,9 @@ class ModuleInstance extends InstanceBase {
 		const enc_wheel = /^\/eos\/out\/active\/wheel\/(\d+)/
 
 		this.oscSocket.on('message', (message, self) => {
+			// Update last message timestamp for heartbeat monitoring
+			this.lastMessageReceived = Date.now()
+			
 			if (this.debugToLogger) {
 				this.log('debug', `Eos OSC message: ${message.address}`)
 				this.log('debug', `  Eos OSC message args: ${JSON.stringify(message.args)}`)
@@ -673,15 +696,65 @@ class ModuleInstance extends InstanceBase {
 		this.oscSocket.open()
 
 		this.oscSocket.socket.on('close', (error) => {
+			this.log('info', 'Connection closed')
 			this.setConnectionState(false)
 		})
 
+		this.oscSocket.socket.on('error', (err) => {
+			this.log('debug', `Socket error: ${err.message}`)
+			// Don't set disconnected here, let 'close' event handle it
+		})
+
 		this.oscSocket.socket.on('connect', () => {
+			// Enable TCP keepalive after connection
+			if (this.oscSocket && this.oscSocket.socket) {
+				this.oscSocket.socket.setKeepAlive(true, 10000)
+			}
+			this.log('info', 'Connection established')
+			this.lastMessageReceived = Date.now()
 			this.setConnectionState(true)
 			this.requestFullState()
 		})
 
 		// this.oscSocket.socket.on('ready', () => { })
+	}
+
+	/**
+	 * Start heartbeat monitoring to detect dead connections
+	 */
+	startHeartbeat() {
+		if (this.heartbeatInterval !== undefined) {
+			// Already running
+			return
+		}
+
+		this.heartbeatInterval = setInterval(() => {
+			if (!this.instanceState['connected']) {
+				// Not connected, nothing to check
+				return
+			}
+
+			const timeSinceLastMessage = Date.now() - this.lastMessageReceived
+			
+			if (timeSinceLastMessage > this.heartbeatTimeout) {
+				// No messages received for too long, connection is probably dead
+				this.log('warn', `No messages received for ${timeSinceLastMessage}ms, connection appears dead`)
+				this.setConnectionState(false)
+				
+				// Force socket close to trigger reconnect
+				if (this.oscSocket && this.oscSocket.socket) {
+					try {
+						this.oscSocket.socket.destroy()
+					} catch (e) {
+						this.log('debug', `Error destroying socket: ${e.message}`)
+					}
+				}
+			} else if (this.oscSocket && this.oscSocket.socket && this.oscSocket.socket.readyState === 'open') {
+				// Send a ping to keep connection alive and verify it works
+				// Eos will respond with /eos/out/ping
+				this.sendOsc('/eos/ping', [], false)
+			}
+		}, 15000) // Check every 15 seconds
 	}
 
 	/**
