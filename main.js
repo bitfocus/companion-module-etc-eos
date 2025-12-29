@@ -22,11 +22,13 @@ class ModuleInstance extends InstanceBase {
 
 		this.lastActChan = -1
 		// Auto-detect: try all combinations of port and SLIP
+		const eosPort = this.config.eos_port || constants.EOS_PORT
+		const eosPortSlip = this.config.eos_port_slip || constants.EOS_PORT_SLIP
 		this.connectionModes = [
-			{ port: constants.EOS_PORT_SLIP, useSlip: true, label: 'Port 3037 with SLIP' },
-			{ port: constants.EOS_PORT_SLIP, useSlip: false, label: 'Port 3037 without SLIP' },
-			{ port: constants.EOS_PORT, useSlip: true, label: 'Port 3032 with SLIP' },
-			{ port: constants.EOS_PORT, useSlip: false, label: 'Port 3032 without SLIP' },
+			{ port: eosPortSlip, useSlip: true, label: `Port ${eosPortSlip} with SLIP` },
+			{ port: eosPortSlip, useSlip: false, label: `Port ${eosPortSlip} without SLIP` },
+			{ port: eosPort, useSlip: true, label: `Port ${eosPort} with SLIP` },
+			{ port: eosPort, useSlip: false, label: `Port ${eosPort} without SLIP` },
 		]
 		this.currentModeIndex = 0
 		this.eos_port = this.connectionModes[0].port
@@ -34,13 +36,14 @@ class ModuleInstance extends InstanceBase {
 		this.readingWheels = false
 
         // how many groups to get labels for
-        this.howManyGroupLabels = constants.NUM_GROUP_LABELS //30
-		this.howManyMacroLabels = constants.NUM_MACRO_LABELS //32
-		this.startMacro = constants.NUM_MACRO_START //31001
+        this.howManyGroupLabels = this.config.num_group_labels || constants.NUM_GROUP_LABELS
+		this.howManyMacroLabels = this.config.num_macro_labels || constants.NUM_MACRO_LABELS
+		this.startMacro = this.config.num_macro_start || constants.NUM_MACRO_START
 
 		// Wheel information as module only variables, not exposed
-		this.wpc = constants.WHEELS_PER_CAT // 64
-		this.wheelsPerCategory = constants.WHEELS_PER_CAT // 64
+		const wheelsPerCat = this.config.wheels_per_cat || constants.WHEELS_PER_CAT
+		this.wpc = wheelsPerCat
+		this.wheelsPerCategory = wheelsPerCat
 		this.wheels = []
 		this.emptyWheelData() // clear out encoder wheel values
 
@@ -110,6 +113,76 @@ class ModuleInstance extends InstanceBase {
 				default: 1,
 				width: 4,
 				regex: '/^(-1|0|\\d+)$/',
+			},
+			{
+				type: 'static-text',
+				id: 'advanced_settings',
+				label: 'Advanced Settings',
+				value: 'Configure system parameters below',
+				width: 12,
+			},
+			{
+				type: 'number',
+				id: 'wheels_per_cat',
+				label: 'Wheels per Category',
+				default: constants.WHEELS_PER_CAT,
+				min: 1,
+				max: 128,
+				width: 6,
+			},
+			{
+				type: 'number',
+				id: 'num_group_labels',
+				label: 'Number of Group Labels',
+				default: constants.NUM_GROUP_LABELS,
+				min: 1,
+				max: 100,
+				width: 6,
+			},
+			{
+				type: 'number',
+				id: 'num_softkeys',
+				label: 'Number of Softkeys',
+				default: constants.NUM_SOFTKEYS,
+				min: 1,
+				max: 24,
+				width: 6,
+			},
+			{
+				type: 'number',
+				id: 'eos_port',
+				label: 'EOS Port',
+				default: constants.EOS_PORT,
+				min: 1,
+				max: 65535,
+				width: 6,
+			},
+			{
+				type: 'number',
+				id: 'eos_port_slip',
+				label: 'EOS Port SLIP',
+				default: constants.EOS_PORT_SLIP,
+				min: 1,
+				max: 65535,
+				width: 6,
+			},
+			{
+				type: 'number',
+				id: 'num_macro_labels',
+				label: 'Number of Macro Labels',
+				default: constants.NUM_MACRO_LABELS,
+				min: 1,
+				max: 1000,
+				width: 6,
+			},
+			{
+				type: 'number',
+				id: 'num_macro_start',
+				label: 'Macro Start Number',
+				default: constants.NUM_MACRO_START,
+				min: 1,
+				max: 99999,
+				width: 6,
 			},
 			/*
 			{
