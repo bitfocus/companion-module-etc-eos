@@ -1,7 +1,7 @@
 {
-	"id": "etc-eos-2",
-	"name": "etc-eos-2",
-	"shortname": "etc-eos-2",
+	"id": "etc-eos",
+	"name": "etc-eos",
+	"shortname": "etc-eos",
 	"description": "Interface to the ETC EOS lighting system",
 	"version": "0.0.0",
 	"license": "MIT",
@@ -20,7 +20,7 @@
 		"entrypoint": "../main.js"
 	},
 	"legacyIds": [],
-	"manufacturer": "ETC2",
-	"products": ["EOS2"],
+	"manufacturer": "ETC",
+	"products": ["EOS"],
 	"keywords": ["Lighting"]
 }
