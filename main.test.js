@@ -40,7 +40,7 @@ describe('ModuleInstance', () => {
 
 			// Assertions
 			expect(Array.isArray(configFields)).toBe(true)
-			expect(configFields.length).toBe(3)
+			expect(configFields.length).toBe(4)
 		})
 	})
 
