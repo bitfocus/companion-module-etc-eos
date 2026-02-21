@@ -71,6 +71,7 @@ class ModuleInstance extends InstanceBase {
 		let currentHost = this.config.host
 		let currentUserId = this.config.user_id
 		let currentUseSlip = this.config.use_slip
+		let currentNumLabels = this.getNumLabelsToPoll()
 
 		this.config = config
 
@@ -82,6 +83,11 @@ class ModuleInstance extends InstanceBase {
 			this.closeOscSocket()
 			this.eos_port = this.config.use_slip ? constants.EOS_PORT_SLIP : constants.EOS_PORT
 			await this.init(config)
+		} else if (currentNumLabels !== this.getNumLabelsToPoll()) {
+			this.updateVariableDefinitions()
+			if (this.instanceState['connected']) {
+				this.getLabelNames()
+			}
 		}
 	}
 
@@ -121,7 +127,28 @@ class ModuleInstance extends InstanceBase {
 				default: false,
 				required: true,
 			},
+			{
+				type: 'number',
+				id: 'num_labels',
+				label: 'Labels to poll',
+				default: constants.DEFAULT_NUM_LABELS,
+				min: 1,
+				max: 9999,
+				required: true,
+			},
 		]
+	}
+
+	getNumLabelsToPoll() {
+		let configuredValue = Number(this.config?.num_labels)
+		if (Number.isFinite(configuredValue)) {
+			configuredValue = Math.floor(configuredValue)
+			if (configuredValue > 0) {
+				return configuredValue
+			}
+		}
+
+		return constants.DEFAULT_NUM_LABELS
 	}
 
 	updateActions() {
@@ -411,9 +438,8 @@ class ModuleInstance extends InstanceBase {
 			 else if ((matches = message.address.match(labelsUpdated))) {
 				// A label was updated, request new title
 				let label_type = matches[1]
-				let label_num = message.args[1].value
-				// Only watching "constans.LABEL_NUM 
-				if (label_num_num <= constants.NUM_LABELS) {
+				let label_num = Number(message.args?.[1]?.value ?? matches[3])
+				if (Number.isFinite(label_num) && label_num <= this.getNumLabelsToPoll()) {
 					let message = `/eos/get/${label_type}`
 					// this.sendOsc('/eos/get/group/index', [ { type: 'i', value: group_num } ], false)
 					this.sendOsc(message, [{ type: 'i', value: label_num }], false)
@@ -597,9 +623,10 @@ class ModuleInstance extends InstanceBase {
 	 * Request Label names from console
 	 * **/
 	getLabelNames(){
+		const numLabels = this.getNumLabelsToPoll()
 		for (let name = 0; name < constants.LABEL_NAMES.length; name++) {
 			const element = constants.LABEL_NAMES[name];
-			for (let i = 0; i <=constants.NUM_LABELS; i++) {
+			for (let i = 1; i <= numLabels; i++) {
 				const message = `/eos/get/${element}`
 				// this.sendOsc('/eos/get/group/index', [ { type: 'i', value: i } ], false)
 				this.sendOsc(message, [{ type: 'i', value: i }], false)

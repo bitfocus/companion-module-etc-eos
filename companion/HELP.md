@@ -46,6 +46,8 @@ _A User ID of `-1` refers to whichever user the console is currently set to._
 
 The **Use TCP SLIP** setting will use port 3037 with TCP 1.1 SLIP protocol, otherwise it will use port 3032. This is a new option since EOS 3.1 for 3rd party connections.
 
+The **Labels to poll** setting controls how many `group_label_X`, `preset_label_X`, and `macro_label_X` variables are created and actively queried from the console.
+
 ## Actions
 
 While it's not practical to create specific actions for every possible command available in your light console, some common actions/keys have been added, although the **Custom Command** action is the most flexible.
@@ -258,7 +260,9 @@ There is a sample Stream Deck + configuration file in the github repository that
 
 To allow the use of buttons to select groups, and capture the group label for use on the buttons, there are a set of variables that hold this information.
 
-Currently the first 30 groups are captured:
+The module captures group labels from `group_label_1` up to your configured **Labels to poll** value.
+
+By default this is:
 
 group_label_1 through group_label_30
 
