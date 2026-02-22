@@ -7,7 +7,7 @@ module.exports = [
 		active_cue: true,
 		connected: true,
 	}),
-	function v2_2_1(context, props) {
+	function v2_2_3(context, props) {
 		const changes = {
 			updatedConfig: null,
 			updatedActions: [],
