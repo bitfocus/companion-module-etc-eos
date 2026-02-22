@@ -1,4 +1,5 @@
 const { CreateConvertToBooleanFeedbackUpgradeScript } = require('@companion-module/base')
+const constants = require('./constants')
 
 module.exports = [
 	CreateConvertToBooleanFeedbackUpgradeScript({
@@ -6,15 +7,21 @@ module.exports = [
 		active_cue: true,
 		connected: true,
 	}),
-	/*
-	 * Place your upgrade scripts here
-	 * Remember that once it has been added it cannot be removed!
-	 */
-	// function (context, props) {
-	// 	return {
-	// 		updatedConfig: null,
-	// 		updatedActions: [],
-	// 		updatedFeedbacks: [],
-	// 	}
-	// },
+	function v2_2_1(context, props) {
+		const changes = {
+			updatedConfig: null,
+			updatedActions: [],
+			updatedFeedbacks: [],
+		}
+
+		if (props.config) {
+			const configuredValue = Number(props.config.num_labels)
+			if (!Number.isFinite(configuredValue) || Math.floor(configuredValue) <= 0) {
+				props.config.num_labels = constants.DEFAULT_NUM_LABELS
+				changes.updatedConfig = props.config
+			}
+		}
+
+		return changes
+	},
 ]
