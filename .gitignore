@@ -5,3 +5,4 @@ package-lock.json
 /pkg.zip
 /build.sh
 .yarn/install-state.gz
+.vscode/
