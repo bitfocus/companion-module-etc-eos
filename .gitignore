@@ -4,3 +4,4 @@ package-lock.json
 /pkg.tgz
 /pkg.zip
 /build.sh
+.yarn/install-state.gz
