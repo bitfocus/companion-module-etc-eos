@@ -29,6 +29,9 @@ const GetVariableDefinitions = function (self) {
 
 		{ variableId: 'hue', name: 'Current hue value' },
 		{ variableId: 'saturation', name: 'Current saturation value' },
+
+		{ variableId: 'macro_fired', name: 'Currently firing macro ID' },
+		{ variableId: 'last_macro', name: 'Last macro that was fired' },
 	]
 
 	/* we can capture these params/attributes from related wheel updates as both string and float */

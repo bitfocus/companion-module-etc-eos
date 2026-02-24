@@ -2,6 +2,29 @@ const { combineRgb, Regex } = require('@companion-module/base')
 
 module.exports = function (self) {
 	self.setFeedbackDefinitions({
+		macroisfired: {
+			type: 'boolean',
+			name: 'When macro is firing',
+			description: "Changes the button's style while this macro is fired.",
+			defaultStyle: {
+				bgcolor: combineRgb(255, 0, 0),
+				color: combineRgb(255, 255, 255),
+			},
+			options: [
+				{
+					id: 'number',
+					type: 'textinput',
+					label: 'Macro ID',
+					default: '1',
+					regex: Regex.INT,
+				},
+			],
+			callback: (feedback) => {
+				return (
+					feedback.options.number === self.instanceState['macro_fired']
+				)
+			},
+		},
 		pending_cue: {
 			type: 'boolean',
 			name: 'When cue is pending',
