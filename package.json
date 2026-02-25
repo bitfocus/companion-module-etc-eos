@@ -1,10 +1,11 @@
 {
 	"name": "etc-eos",
 	"version": "2.2.3",
-	"main": "main.js",
+	"main": "src/main.js",
 	"scripts": {
 		"format": "prettier -w .",
-		"test": "jest --silent=false"
+		"test": "jest --silent=false",
+		"package": "companion-module-build"
 	},
 	"license": "MIT",
 	"repository": {
@@ -25,5 +26,6 @@
 	"resolutions": {
 		"ajv": "^8.18.0"
 	},
-	"prettier": "@companion-module/tools/.prettierrc.json"
+	"prettier": "@companion-module/tools/.prettierrc.json",
+	"packageManager": "yarn@4.12.0"
 }
