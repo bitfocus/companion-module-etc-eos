@@ -1,7 +1,7 @@
 const { combineRgb } = require('@companion-module/base')
 
 module.exports = function (self) {
-	self.setPresetDefinitions({
+	const presets = {
 		cue_trigger: {
 			type: 'button',
 			category: 'Cues',
@@ -132,5 +132,50 @@ module.exports = function (self) {
 			steps: [],
 			feedbacks: [],
 		},
-	})
+	}
+
+	const numLabels = typeof self.getNumLabelsToPoll === 'function' ? self.getNumLabelsToPoll() : constants.DEFAULT_NUM_LABELS
+
+	for (let i = 1; i <= numLabels; i++) {
+		presets[`macro_${i}`] = {
+			type: 'button',
+			category: `Macros`,
+			name: `Macro ${i}`,
+			style: {
+				text: `M${i}\n$(etc-eos:macro_label_${i})`,
+				size: '14',
+				color: combineRgb(255, 255, 255),
+				bgcolor: combineRgb(0, 0, 0),
+				show_topbar: false,
+			},
+			steps: [
+				{
+					down: [
+						{
+							actionId: 'run_macro',
+							options: {
+								macro: `${i}`,
+							},
+						},
+					],
+					up: [],
+				}
+			],
+			feedbacks: [
+				{
+					feedbackId: 'macroisfired',
+					options: {
+						number: `${i}`,
+					},
+					style: {
+						color: combineRgb(255, 255, 255),
+						bgcolor: combineRgb(0, 128, 0),
+					},
+				},
+			],
+		}
+	}
+
+
+	self.setPresetDefinitions(presets)
 }

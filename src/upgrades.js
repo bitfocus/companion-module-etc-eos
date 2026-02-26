@@ -3,6 +3,7 @@ const constants = require('./constants')
 
 module.exports = [
 	CreateConvertToBooleanFeedbackUpgradeScript({
+		macroisfired: true,
 		pending_cue: true,
 		active_cue: true,
 		connected: true,
