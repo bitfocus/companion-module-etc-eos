@@ -53,7 +53,7 @@ class EosSync {
      */
     set_item_values(item_type, item_number, list_start_index, list_values) {        
         let label = get_list_param(2, list_start_index, list_values)
-        if (label) {
+        if (label !== undefined) {
             let subs = this[item_type].get(item_number)?.subscriptions ?? [];
 
             this[item_type].set(item_number, {

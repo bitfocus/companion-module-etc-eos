@@ -808,8 +808,8 @@ class ModuleInstance extends InstanceBase {
 					if (arg.value.includes('-')) {
 						// a number range
 						// in a range all values are integers, and all values are guaranteed to exist
-						let start_num = Number(arg.value.split('-'));
-						let end_num = Number(arg.value.split('-'));
+						let start_num = Number(arg.value.split('-')[0]);
+						let end_num = Number(arg.value.split('-')[1]);
 
 						for (let item_number = start_num; item_number <= end_num; item_number++) {
 							this.sendOsc(`get/${item_type}/${item_number}`)
