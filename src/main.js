@@ -85,6 +85,8 @@ class ModuleInstance extends InstanceBase {
 			this.closeOscSocket()
 			this.eos_port = this.config.use_slip ? constants.EOS_PORT_SLIP : constants.EOS_PORT
 			await this.init(config)
+		} else if (currentNumLabels !== this.getNumLabelsToPoll()) {
+			this.updateVariableDefinitions()
 		}
 	}
 
