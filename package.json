@@ -1,31 +1,32 @@
 {
-	"name": "etc-eos",
-	"version": "2.2.3",
-	"main": "src/main.js",
-	"scripts": {
-		"format": "prettier -w .",
-		"test": "jest --silent=false",
-		"package": "companion-module-build"
-	},
-	"license": "MIT",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/bitfocus/companion-module-etc-eos.git"
-	},
-	"dependencies": {
-		"@companion-module/base": "^1.14.1",
-		"osc": "^2.4.5"
-	},
-	"devDependencies": {
-		"@companion-module/tools": "^2.7.1",
-		"eslint": "^9.36.0",
-		"jest": "^29.7.0",
-		"prettier": "^3.8.1",
-		"serialport": "^11.0.0"
-	},
-	"resolutions": {
-		"ajv": "^8.18.0"
-	},
-	"prettier": "@companion-module/tools/.prettierrc.json",
-	"packageManager": "yarn@4.12.0"
+  "name": "etc-eos",
+  "version": "2.2.3",
+  "main": "src/main.js",
+  "scripts": {
+    "format": "prettier -w .",
+    "test": "jest --silent=false",
+    "package": "companion-module-build"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bitfocus/companion-module-etc-eos.git"
+  },
+  "dependencies": {
+    "@companion-module/base": "^1.14.1",
+    "osc": "^2.4.5"
+  },
+  "devDependencies": {
+    "@companion-module/tools": "^2.7.1",
+    "eslint": "^9.36.0",
+    "jest": "^29.7.0",
+    "prettier": "^3.8.1",
+    "serialport": "^11.0.0"
+  },
+  "resolutions": {
+    "ajv": "^8.18.0",
+    "brace-expansion": "5.0.8"
+  },
+  "prettier": "@companion-module/tools/.prettierrc.json",
+  "packageManager": "yarn@4.12.0"
 }
