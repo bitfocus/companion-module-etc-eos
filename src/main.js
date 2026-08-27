@@ -6,6 +6,7 @@ const { GetVariableDefinitions, UpdateVariableDefinitions } = require('./variabl
 const UpdatePresetDefinitions = require('./presets')
 const { ParamMap } = require('./param_map')
 const constants = require('./constants.js')
+const sync = require('./sync.js')
 
 class ModuleInstance extends InstanceBase {
 	constructor(internal) {
@@ -24,6 +25,7 @@ class ModuleInstance extends InstanceBase {
 		this.eos_port = this.config.use_slip ? constants.EOS_PORT_SLIP : constants.EOS_PORT
 		this.readingWheels = false
 
+		this.sync = new sync.EosSync()
 
 		// Wheel information as module only variables, not exposed
 		this.wpc = constants.WHEELS_PER_CAT // 64
@@ -85,9 +87,6 @@ class ModuleInstance extends InstanceBase {
 			await this.init(config)
 		} else if (currentNumLabels !== this.getNumLabelsToPoll()) {
 			this.updateVariableDefinitions()
-			if (this.instanceState['connected']) {
-				this.getLabelNames()
-			}
 		}
 	}
 
@@ -261,6 +260,34 @@ class ModuleInstance extends InstanceBase {
 	}
 
 	/**
+	 * Sends the path to the OSC host.
+	 *
+	 * @param path          The OSC path to send
+	 * @param args          An array of arguments, or empty if no arguments needed
+	 * @param appendPrefix  Whether to append the '/eos/' prefix to the command.
+	 */
+	sendOsc(path, args, appendPrefix) {
+		if (!this.config.host) {
+			return
+		}
+
+		if (appendPrefix !== false) {
+			path = `/eos/${path}`
+		}
+
+		let packet = {
+			address: path,
+			args: args ?? [],
+		}
+
+		if (this.debugToLogger) {
+			this.log('info', `Eos: Sending packet: ${JSON.stringify(packet)}`)
+		}
+
+		this.oscSocket.send(packet)
+	}
+
+	/**
 	 * Sets the listeners on the this.oscSocket object.
 	 *
 	 * Only needs to be done once, even if the socket reconnects.
@@ -274,29 +301,25 @@ class ModuleInstance extends InstanceBase {
 			}
 		})
 
-		const cueActive = /^\/eos\/out\/active\/cue\/([\d\.]+)\/([\d\.]+)$/
-		const cueActiveText = '/eos/out/active/cue/text'
-		const cuePending = /^\/eos\/out\/pending\/cue\/([\d\.]+)\/([\d\.]+)$/
-		const cuePendingText = '/eos/out/pending/cue/text'
-		const cuePendingOut = '/eos/out/pending/cue'
-		const cuePrevious = /^\/eos\/out\/previous\/cue\/([\d\.]+)\/([\d\.]+)$/
+		const cueActive       = /^\/eos\/out\/active\/cue\/([\d\.]+)\/([\d\.]+)$/
+		const cueActiveText   = '/eos/out/active/cue/text'
+		const cuePending      = /^\/eos\/out\/pending\/cue\/([\d\.]+)\/([\d\.]+)$/
+		const cuePendingText  = '/eos/out/pending/cue/text'
+		const cuePendingOut   = '/eos/out/pending/cue'
+		const cuePrevious     = /^\/eos\/out\/previous\/cue\/([\d\.]+)\/([\d\.]+)$/
 		const cuePreviousText = '/eos/out/previous/cue/text'
-		const cuePreviousOut = '/eos/out/previous/cue'
-		const showName = '/eos/out/show/name'
-		const version = '/eos/out/get/version'
-		const showLoaded = '/eos/out/event/show/loaded'
-		const showCleared = '/eos/out/event/show/cleared'
-		const softkey = /^\/eos\/out\/softkey\/(\d+)$/
-		const cmd = /^\/eos\/out\/user\/(\d+)\/cmd$/
-		const chan = '/eos/out/active/chan'
-		const groupNull = /^\/eos\/out\/get\/group\/([\d\.]+)$/
-		const colorhs = '/eos/out/color/hs'
-		const labels = /^\/eos\/out\/get\/(group|preset|macro)\/([\d\.]+)\/list\/([\d\.]+)\/([\d\.]+)$/
-		const labelsUpdated = /^\/eos\/out\/notify\/(group|preset|macro)\/list\/([\d\.]+)\/([\d\.]+)$/
-		const macro = /^\/eos\/out\/event\/macro\/(\d+)$/
-
-		// Maybe for later
-		// const groupChannels = /^\/eos\/out\/get\/group\/([\d\.]+)\/channels\/list\/([\d\.]+)/([\d\.]+)$/
+		const cuePreviousOut  = '/eos/out/previous/cue'
+		const showName        = '/eos/out/show/name'
+		const version         = '/eos/out/get/version'
+		const showLoaded      = '/eos/out/event/show/loaded'
+		const showCleared     = '/eos/out/event/show/cleared'
+		const softkey         = /^\/eos\/out\/softkey\/(\d+)$/
+		const cmd             = /^\/eos\/out\/user\/(\d+)\/cmd$/
+		const chan            = '/eos/out/active/chan'
+		const colorhs         = '/eos/out/color/hs'
+		const macroFired      = /^\/eos\/out\/event\/macro\/(\d+)$/
+		const syncGet         = '/eos/out/get/'
+		const syncNotify      = '/eos/out/notify/'
 
 		// This is the raw OSC message, but we are getting something parsed already...
 		// const enc_wheel      = /^\/eos\/out\/active\/wheel\/(\d+),\s*(\w+)\s*\[(\w+)\]\(s\).\s+(\d+)\(i\),\s*([\d.]*)\(f\)$/
@@ -366,33 +389,32 @@ class ModuleInstance extends InstanceBase {
 					},
 					true
 				)
-			} else if (
-				message.address === version &&
-				message.args.length === 3 &&
-				message.args[0].type === 's' &&
-				message.args[1].type === 's' &&
-				message.args[2].type === 'i'
-			) {
-				this.setInstanceStates(
-					{
-						eos_version: message.args[0].value,
-						fixture_library_version: message.args[1].value,
-						gel_swatch_type: message.args[2].value,
-					},
-					true
-				)
-			} else if (message.address === version && message.args.length === 1 && message.args[0].type === 's') {
-				this.setInstanceStates(
-					{
-						eos_version: message.args[0].value,
-						fixture_library_version: '',
-						gel_swatch_type: '',
-					},
-					true
-				)
+			} else if (message.address === version) {
+				let args = message.args;
+				if (args.length == 3 &&
+					args[0].type === 's' && args[1].type === 's' && args[2].type === 'i'
+				) {
+					this.setInstanceStates(
+						{
+							eos_version: args[0].value,
+							fixture_library_version: args[1].value,
+							gel_swatch_type: args[2].value,
+						},
+						true
+					)
+				} else if (args.length === 1 && args[0].type === 's' ) {
+					this.setInstanceStates(
+						{
+							eos_version: args[0].value,
+							fixture_library_version: '',
+							gel_swatch_type: '',
+						},
+						true
+					)
+				}
 			} else if (message.address === showLoaded || message.address === showCleared) {
 				// Reset the state when a show is loaded or a new show is created.
-				this.requestFullState()
+				this.sendConnectStart()
 			} else if (
 				(matches = message.address.match(softkey)) &&
 				message.args.length === 1 &&
@@ -414,7 +436,7 @@ class ModuleInstance extends InstanceBase {
 						true
 					)
 				}
-			} else if ((matches = message.address.match(macro))) {
+			} else if ((matches = message.address.match(macroFired))) {
 				const macroId = matches[1]
 				this.setInstanceStates(
 					{
@@ -443,65 +465,40 @@ class ModuleInstance extends InstanceBase {
 					// if channel changed, we need to get full set of wheel data
 					if (actChan != this.lastActChan) {
 						this.emptyEncVariables()
-						this.requestFullState()
+						this.requestEncData()
 						this.lastActChan = actChan
 					}
 				} else if (this.lastActChan != 0) {
 					// No channel active, clear out encoders, set lastActChan
 					// to zero so we don't keep looping on this. Initially set to -1
 					this.emptyEncVariables()
-					this.requestFullState()
+					this.requestEncData()
 					this.lastActChan = 0
 				}
-			} 
-			
-			 else if ((matches = message.address.match(labelsUpdated))) {
-				// A label was updated, request new title
-				let label_type = matches[1]
-				let label_num = Number(message.args?.[1]?.value ?? matches[3])
-				if (Number.isFinite(label_num) && label_num <= this.getNumLabelsToPoll()) {
-					let message = `/eos/get/${label_type}`
-					// this.sendOsc('/eos/get/group/index', [ { type: 'i', value: group_num } ], false)
-					this.sendOsc(message, [{ type: 'i', value: label_num }], false)
-					// this.log('info', `Eos: Need to update group info: ${JSON.stringify(group_num)}`)
-				}
-			} else if ((matches = message.address.match(labels))) {
-				let label_type = matches[1]// group, macro, preset , …
-				let label_num = matches[2]
-				this.log('info', `Eos: Capture group info: ${JSON.stringify(message)}`)
-				this.log('info', `Eos: Captured value for ${label_type} ${label_num} (${label_type}_label_${label_num}): ${message.args[2].value}`)
-				let label_string = message.args[2].value || ''
-				if (label_string) {
+			} else if (message.address.startsWith(syncGet)) {
+				this.handleSyncGet(message)
+			} else if (message.address.startsWith(syncNotify)) {
+				this.handleSyncNotify(message)
+			} else if (message.address === colorhs) {
+				let args = message.args;
+				if (args.length == 2 && args[0].type == "f" && args[1].type == "f") {
+					let hue = args[0].value.toFixed(3);
+					let sat = args[1].value.toFixed(3);
+					// this.log('debug', `HS: ${hue} ${sat}`)
 					this.setInstanceStates(
 						{
-							[`${label_type}_label_${label_num}`]: label_string,
+							hue:               hue,
+							enc_hue_floatval:  hue,
+							enc_hue_stringval: hue.toString(),
+							saturation:                 sat,
+							enc_saturation_floatval:    sat,
+							enc_saturation_stringval:   sat.toString(),
+							enc_saturationv2_floatval:  sat,
+							enc_saturationv2_stringval: sat.toString(),
 						},
 						true
 					)
 				}
-			} else if ((matches = message.address.match(groupNull))) {
-				let group_num = matches[1]
-				this.setInstanceStates(
-					{
-						[`group_label_${group_num}`]: '',
-					},
-					true
-				)
-			} else if (message.address === colorhs) {
-				// this.log('debug', `HS: ${hue} ${sat}`)
-				this.setInstanceStates(
-					{
-						hue: message.args[0].value.toFixed(3),
-						saturation: message.args[1].value.toFixed(3),
-						enc_hue_floatval: message.args[0].value.toFixed(3),
-						enc_hue_stringval: message.args[0].value.toFixed(3).toString(),
-						enc_saturation_floatval: message.args[1].value.toFixed(3),
-						enc_saturation_stringval: message.args[1].value.toFixed(3).toString(),
-						enc_saturationv2_floatval: message.args[1].value.toFixed(3),
-						enc_saturationv2_stringval: message.args[1].value.toFixed(3).toString(),
-					},
-					true
-				)
 			} else if ((matches = message.address.match(enc_wheel))) {
 				// set variables/state for wheel values
 				let wheel_num = matches[1]
@@ -570,7 +567,7 @@ class ModuleInstance extends InstanceBase {
 
 		this.oscSocket.socket.on('connect', () => {
 			this.setConnectionState(true)
-			this.requestFullState()
+			this.sendConnectStart()
 		})
 
 		// this.oscSocket.socket.on('ready', () => { })
@@ -640,24 +637,35 @@ class ModuleInstance extends InstanceBase {
 	}
 
 	/**
-	 * Request Label names from console
-	 * **/
-	getLabelNames(){
-		const numLabels = this.getNumLabelsToPoll()
-		for (let name = 0; name < constants.LABEL_NAMES.length; name++) {
-			const element = constants.LABEL_NAMES[name];
-			for (let i = 1; i <= numLabels; i++) {
-				const message = `/eos/get/${element}`
-				// this.sendOsc('/eos/get/group/index', [ { type: 'i', value: i } ], false)
-				this.sendOsc(message, [{ type: 'i', value: i }], false)
-			}
+	 * Request item counts from console
+	 **/
+	requestSubscriptionCounts() {
+		for (const item_type of constants.LABEL_NAMES) {
+			this.sendOsc(`get/${item_type}/count`)
+		}
+	}
+	
+	/**
+	 * Request Label names from console by index
+	 **/
+	requestSubscriptionItems(item_type, count) {
+		for (let i = 0; i < count; i++) {
+			this.sendOsc(`get/${item_type}/index`, [{ type: 'i', value: i }])
 		}
 	}
 
 	/**
-	 * Empties the state (variables/feedbacks) and requests the current state from the console.
+	 * Fetch data about encoders???
 	 */
-	requestFullState() {
+	requestEncData() {
+		// we don't do this actively, this happens due to subscriptions
+	}
+
+	/**
+	 * Send messages for when we have just connected,
+	 * or a new showfile has been loaded
+	 */
+	sendConnectStart() {
 		this.emptyState()
 
 		// Request the current state of the console.
@@ -669,11 +677,9 @@ class ModuleInstance extends InstanceBase {
 		// Turn on subscription for show file event updates
 		this.sendOsc('/eos/subscribe', [{ type: 'i', value: 1 }], false)
 
-		this.sendOsc('get/version', [])
+		this.sendOsc('get/version')
 
-		// Get xx groups worth of labels - issue the request here to get the values,
-		// they are caught in the on.message elsewhere
-		this.getLabelNames()
+		this.requestSubscriptionCounts()
 	}
 
 	/**
@@ -684,8 +690,138 @@ class ModuleInstance extends InstanceBase {
 		this.instanceState = {
 			connected: this.instanceState['connected'],
 		}
-
 		this.checkFeedbacks('pending_cue', 'active_cue', 'connected', 'macroisfired')
+
+		// reset sync state and recompute sync feedbacks
+		this.sync.reset()
+		let feedback_types = constants.LABEL_NAMES.map((value) => `${value}_label`);
+		this.checkFeedbacks(...feedback_types);
+	}
+
+	handleSyncGet(message) {
+		// this.log('info', `Eos: handleSyncGet ${JSON.stringify(message)}`);
+		let matches;
+
+		const count_re = /^\/eos\/out\/get\/(\w+)\/count$/;
+		if ((matches = message.address.match(count_re))) {
+			let item_type = matches[1];
+			if (!constants.LABEL_NAMES.includes(item_type))
+				// item type we don't track, just ignore
+				return;
+			
+			if (message.args.length < 1) {
+				this.log('warn', `Eos: No property value in count`)
+				return;
+			}
+			let item_count = message.args[0].value;
+			if (!item_count) {
+				this.log('warn', `Eos: Failed to parse count value: ${JSON.stringify(message)}`)
+				return;
+			}
+			item_count = Number(item_count);
+			if (!Number.isInteger(item_count)) {
+				this.log('warn', `Eos: Non-integer count value: ${JSON.stringify(message)}`)
+				return;
+			}
+
+			// this.sync.set_item_count(item_type, item_count)
+			this.requestSubscriptionItems(item_type, item_count)
+			return;
+		}
+
+		const delete_re = /^\/eos\/out\/get\/(\w+)\/(\d+(?:\.\d+)?)$/;
+		if ((matches = message.address.match(delete_re))) {
+			let item_type = matches[1];
+			let item_number = matches[2];
+			if (!constants.LABEL_NAMES.includes(item_type))
+				// item type we don't track, just ignore
+				return;
+
+			this.sync.set_item_deleted(item_type, item_number)
+
+			// legacy Variable updates
+			let num = Number(item_number)
+			if (Number.isInteger(num) && num <= this.getNumLabelsToPoll()) {
+				this.setInstanceStates({[`${item_type}_label_${item_number}`]: ''}, true);
+			}
+
+			return;
+		}
+
+		const list_re = /^\/eos\/out\/get\/(\w+)\/(\d+(?:\.\d+)?)\/list\/(\d+)\/(\d+)$/;
+		if ((matches = message.address.match(list_re))) {
+			let item_type = matches[1];
+			let item_number = matches[2];
+			let list_index = matches[3];
+			let list_count = matches[4]; // note this is total items, not for just this packet
+			if (!constants.LABEL_NAMES.includes(item_type))
+				// item type we don't track, just ignore
+				return;
+
+			this.log(
+				'info',
+				`Eos: Set item value: ${item_type} ${item_number} ${list_index} ${JSON.stringify(message.args)}`
+			)
+			let feedback_ids = this.sync.set_item_values(item_type, item_number, list_index, message.args);
+			this.checkFeedbacksById(...feedback_ids);
+
+			// legacy Variable updates
+			let num = Number(item_number)
+			if (Number.isInteger(num) && num <= this.getNumLabelsToPoll()) {
+				let label_str = sync.get_list_param(2, list_index, message.args);
+				if (label_str !== null) {
+					this.setInstanceStates({[`${item_type}_label_${item_number}`]: label_str}, true);
+				}
+			}
+
+			return;
+		}
+	}
+
+	handleSyncNotify(message) {
+		this.log('info', `Eos: handleSyncNotify ${JSON.stringify(message)}`);
+		let matches;
+
+		const notify_re = /^\/eos\/out\/notify\/(\w+)/;
+		if ((matches = message.address.match(notify_re))) {
+			let item_type = matches[1];
+			if (!constants.LABEL_NAMES.includes(item_type))
+				// item type we don't track, just ignore
+				return;
+
+			// no arguments: whole list is invalid, re-sync everything
+			if (!message.args || message.args.length == 0) {
+				this.log('info', `Eos: Whole list updated, re-syncing: ${item_type}`)
+				this.sendOsc(`get/${item_type}/count`)
+				return;
+			}
+			
+			// remove the first element (sequence number)
+			// TODO: technically this is incorrect if we aren't the first message of the list
+			message.args.shift()
+			// request data for all of the subscription items
+			for (const arg of message.args) {
+				if (arg.type == 'i') {
+					let item_number = arg.value;
+					this.sendOsc(`get/${item_type}/${item_number}`)
+				} else if (arg.type == 's') {
+					if (arg.value.includes('-')) {
+						// a number range
+						// in a range all values are integers, and all values are guaranteed to exist
+						let start_num = Number(arg.value.split('-')[0]);
+						let end_num = Number(arg.value.split('-')[1]);
+
+						for (let item_number = start_num; item_number <= end_num; item_number++) {
+							this.sendOsc(`get/${item_type}/${item_number}`)
+						}
+					} else {
+						// will be a decimal number - leave it as a string
+						let item_number = arg.value;
+						this.sendOsc(`get/${item_type}/${item_number}`)
+					}
+				}
+			}
+		}
 	}
 
 	/**
@@ -740,34 +876,6 @@ class ModuleInstance extends InstanceBase {
 			)
 			this.checkFeedbacks('active_cue')
 		}
-	}
-
-	/**
-	 * Sends the path to the OSC host.
-	 *
-	 * @param path          The OSC path to send
-	 * @param args          An array of arguments, or empty if no arguments needed
-	 * @param appendPrefix  Whether to append the '/eos/' prefix to the command.
-	 */
-	sendOsc(path, args, appendPrefix) {
-		if (!this.config.host) {
-			return
-		}
-
-		if (appendPrefix !== false) {
-			path = `/eos/${path}`
-		}
-
-		let packet = {
-			address: path,
-			args: args,
-		}
-
-		if (this.debugToLogger) {
-			this.log('info', `Eos: Sending packet: ${JSON.stringify(packet)}`)
-		}
-
-		this.oscSocket.send(packet)
 	}
 
 	/*

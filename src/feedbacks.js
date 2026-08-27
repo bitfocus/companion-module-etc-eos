@@ -1,7 +1,8 @@
 const { combineRgb, Regex } = require('@companion-module/base')
+const constants = require('./constants.js')
 
 module.exports = function (self) {
-	self.setFeedbackDefinitions({
+	let feedbacks = {
 		macroisfired: {
 			type: 'boolean',
 			name: 'When macro is firing',
@@ -138,5 +139,41 @@ module.exports = function (self) {
 				return feedback.options.connected === self.instanceState['connected']
 			},
 		},
-	})
+	};
+
+	for (const item_type of constants.LABEL_NAMES) {
+		const item_name = constants.ITEM_NAMES[item_type];
+		feedbacks[`${item_type}_label`] = {
+			type: 'value',
+			name: `${item_name} Label`,
+			description: `The Label of a numbered ${item_name}.`,
+			options: [{
+				id: 'number',
+				type: 'textinput',
+				label: `${item_name} Number`,
+				default: '1',
+				regex: Regex.FLOAT_OR_INT,
+			}],
+			callback: (feedback) => {
+				let sync = self.sync;
+				self.log(
+					'debug',
+					`Eos: Feedback: ${item_name} callback called ${feedback.options.number} ${feedback.id}`
+				)
+				let v = sync.get_item_value(item_type, feedback.options.number, feedback.id);
+				self.log('debug', `Eos: Feedback: ${item_name} got value ${feedback.options.number} ${feedback.id} ${v}`)
+				return v;
+			},
+			unsubscribe: (feedback) => {
+				let sync = self.sync;
+				self.log(
+					'debug',
+					`Eos: Feedback: ${item_name} callback unsubscribed ${feedback.options.number} ${feedback.id}`
+				)
+				sync.remove_item_subscription(item_type, feedback.options.number, feedback.id);
+			},
+		};
+	}
+
+	self.setFeedbackDefinitions(feedbacks);
 }
