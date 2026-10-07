@@ -1,7 +1,8 @@
 const { Regex } = require('@companion-module/base')
+const constants = require('./constants.js')
 
 module.exports = function (self) {
-	self.setActionDefinitions({
+	const actions = {
 		custom_cmd: {
 			name: 'Custom Command',
 			options: [
@@ -392,5 +393,28 @@ module.exports = function (self) {
 				self.sendOsc(`softkey/${key}`, arg)
 			},
 		},
-	})
+	}
+
+	// direct-select style actions	
+	for (const item_type of ['preset', 'group', 'ip', 'cp', 'fp', 'bp', 'fx', 'snap', 'ms']) {
+		const item_name = constants.ITEM_NAMES[item_type];
+		actions[`ds_${item_type}`] = {
+			name: `Select ${item_name}`,
+			options: [
+				{
+					id: item_type,
+					type: 'textinput',
+					label: item_name,
+					default: '1',
+					regex: Regex.FLOAT_OR_INT,
+					useVariables: true,
+				},
+			],
+			callback: async (event, context) => {
+				self.sendOsc(`${item_type}`, [{ type:'s', value:event.options[item_type] }])
+			},
+		}
+	}
+
+	self.setActionDefinitions(actions)
 }

@@ -1,4 +1,5 @@
 const { combineRgb } = require('@companion-module/base')
+const constants = require('./constants.js')
 
 module.exports = function (self) {
 	const presets = {
@@ -134,6 +135,7 @@ module.exports = function (self) {
 		},
 	}
 
+	// macro presets (with fire feedback)
 	const numLabels = typeof self.getNumLabelsToPoll === 'function' ? self.getNumLabelsToPoll() : constants.DEFAULT_NUM_LABELS
 
 	for (let i = 1; i <= numLabels; i++) {
@@ -176,6 +178,42 @@ module.exports = function (self) {
 		}
 	}
 
+	// // generic direct-select style presets
+	// // currently disabled until presets have more capabilities for creating localVariables
+	// // - can't currently create variables that are based on value feedbacks
+	// for (const item_type of ['macro', 'preset', 'group', 'ip', 'cp', 'fp', 'bp', 'fx', 'snap', 'ms']) {
+	// 	const item_name = constants.ITEM_NAMES[item_type];
+	// 	const action_id = item_type == 'macro' ? 'run_macro' : `ds_${item_type}`;
+	// 	presets[`ds_${item_type}`] = {
+	// 		type: 'button',
+	// 		name: `DS ${item_name}`,
+	// 		category: 'Direct Selects',
+	// 		style: {
+	// 			text: `$(local:label)`,
+	// 			size: '14',
+	// 			color: 0xffffff,
+	// 			bgcolor: constants.ITEM_COLOURS[item_type],
+	// 			show_topbar: false
+	// 		},
+	// 		feedbacks: [],
+	// 		steps: [{
+	// 			down: [{
+	// 				actionId: action_id,
+	// 				options: {
+	// 					[item_type]: { isExpression: true, value: '$(local:num)' },
+	// 				},
+	// 			}],
+	// 			up: [],
+	// 		}],
+	// 		localVariables: [
+	// 			{
+	// 				variableType: 'simple',
+	// 				variableName: 'num',
+	// 				startupValue: 1,
+	// 			},
+	// 		],
+	// 	}
+	// }
 
 	self.setPresetDefinitions(presets)
 }
