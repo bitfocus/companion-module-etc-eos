@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [18.x]
+        node-version: [26.x]
 
     steps:
       - uses: actions/checkout@v4
@@ -25,7 +25,7 @@ jobs:
           corepack enable
       - name: Prepare Environment
         run: |
-          yarn install
+          yarn install --immutable
         env:
           CI: true
       # TODO(Peter): No prettier until we resolve the constants file
