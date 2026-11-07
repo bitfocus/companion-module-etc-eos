@@ -31,6 +31,10 @@ class ModuleInstance extends InstanceBase {
 		this.wheels = []
 		this.emptyWheelData() // clear out encoder wheel values
 
+		// Cues of the configured cue list, keyed by their Eos index (0-based)
+		this.cueListRecords = new Map()
+		this.cueListDefinedNumbers = []
+
 		this.updateActions() // export actions
 		this.updateFeedbacks() // export feedbacks
 		this.updateVariableDefinitions() // export variable definitions
@@ -56,6 +60,8 @@ class ModuleInstance extends InstanceBase {
 
 	// When module gets deleted
 	async destroy() {
+		this.clearCueListTimers()
+
 		// Clear the reconnect timer if it exists.
 		if (this.reconnectTimer !== undefined) {
 			clearInterval(this.reconnectTimer)
@@ -72,6 +78,8 @@ class ModuleInstance extends InstanceBase {
 		let currentUserId = this.config.user_id
 		let currentUseSlip = this.config.use_slip
 		let currentNumLabels = this.getNumLabelsToPoll()
+		let currentCueList = this.getCueListToPoll()
+		let currentNumCues = this.getNumCuesToPoll()
 
 		this.config = config
 
@@ -81,12 +89,20 @@ class ModuleInstance extends InstanceBase {
 			currentUseSlip !== this.config.use_slip
 		) {
 			this.closeOscSocket()
+			this.clearCueListTimers()
 			this.eos_port = this.config.use_slip ? constants.EOS_PORT_SLIP : constants.EOS_PORT
 			await this.init(config)
 		} else if (currentNumLabels !== this.getNumLabelsToPoll()) {
 			this.updateVariableDefinitions()
 			if (this.instanceState['connected']) {
 				this.getLabelNames()
+				this.requestCueList()
+			}
+		} else if (currentCueList !== this.getCueListToPoll() || currentNumCues !== this.getNumCuesToPoll()) {
+			if (this.instanceState['connected']) {
+				this.requestCueList()
+			} else {
+				this.clearCueList()
 			}
 		}
 	}
@@ -136,7 +152,52 @@ class ModuleInstance extends InstanceBase {
 				max: 9999,
 				required: true,
 			},
+			{
+				type: 'number',
+				id: 'cue_list',
+				label: 'Cue list for cue variables (0 = off)',
+				default: constants.DEFAULT_CUE_LIST,
+				min: 0,
+				max: 999,
+				width: 6,
+				required: true,
+			},
+			{
+				type: 'number',
+				id: 'num_cues',
+				label: 'Cues to poll',
+				default: constants.DEFAULT_NUM_CUES,
+				min: 0,
+				max: 9999,
+				width: 6,
+				required: true,
+			},
 		]
+	}
+
+	getCueListToPoll() {
+		let configuredValue = Number(this.config?.cue_list)
+		if (Number.isFinite(configuredValue) && configuredValue >= 0) {
+			return Math.floor(configuredValue)
+		}
+
+		return constants.DEFAULT_CUE_LIST
+	}
+
+	getNumCuesToPoll() {
+		let configuredValue = Number(this.config?.num_cues)
+		if (Number.isFinite(configuredValue) && configuredValue >= 0) {
+			return Math.floor(configuredValue)
+		}
+
+		return constants.DEFAULT_NUM_CUES
+	}
+
+	/**
+	 * Cue lists can't be polled when the list or the number of cues is 0.
+	 */
+	isCueListPollingEnabled() {
+		return this.getCueListToPoll() > 0 && this.getNumCuesToPoll() > 0
 	}
 
 	getNumLabelsToPoll() {
@@ -294,6 +355,9 @@ class ModuleInstance extends InstanceBase {
 		const labels = /^\/eos\/out\/get\/(group|preset|macro)\/([\d\.]+)\/list\/([\d\.]+)\/([\d\.]+)$/
 		const labelsUpdated = /^\/eos\/out\/notify\/(group|preset|macro)\/list\/([\d\.]+)\/([\d\.]+)$/
 		const macro = /^\/eos\/out\/event\/macro\/(\d+)$/
+		const cueListCount = /^\/eos\/out\/get\/cue\/(\d+)\/count$/
+		const cueListRecord = /^\/eos\/out\/get\/cue\/(\d+)\/([\d\.]+)\/(\d+)\/list\/(\d+)\/(\d+)$/
+		const cueListUpdated = /^\/eos\/out\/notify\/cue\/(\d+)\/list\/(\d+)\/(\d+)$/
 
 		// Maybe for later
 		// const groupChannels = /^\/eos\/out\/get\/group\/([\d\.]+)\/channels\/list\/([\d\.]+)/([\d\.]+)$/
@@ -393,6 +457,16 @@ class ModuleInstance extends InstanceBase {
 			} else if (message.address === showLoaded || message.address === showCleared) {
 				// Reset the state when a show is loaded or a new show is created.
 				this.requestFullState()
+				this.requestCueList()
+			} else if ((matches = message.address.match(cueListCount))) {
+				this.handleCueListCount(matches[1], message.args?.[0]?.value)
+			} else if ((matches = message.address.match(cueListRecord))) {
+				this.handleCueListRecord(matches[1], matches[2], matches[3], matches[4], message.args?.[2]?.value)
+			} else if ((matches = message.address.match(cueListUpdated))) {
+				if (Number(matches[1]) === this.getCueListToPoll()) {
+					// A cue in our list was added, changed or deleted. Indexes may have shifted, so re-read the list.
+					this.scheduleCueListRefresh()
+				}
 			} else if (
 				(matches = message.address.match(softkey)) &&
 				message.args.length === 1 &&
@@ -571,6 +645,7 @@ class ModuleInstance extends InstanceBase {
 		this.oscSocket.socket.on('connect', () => {
 			this.setConnectionState(true)
 			this.requestFullState()
+			this.requestCueList()
 		})
 
 		// this.oscSocket.socket.on('ready', () => { })
@@ -652,6 +727,149 @@ class ModuleInstance extends InstanceBase {
 				this.sendOsc(message, [{ type: 'i', value: i }], false)
 			}
 		}
+	}
+
+	/**
+	 * Converts a cue number into something usable in a variable id (variable ids can't contain dots).
+	 */
+	cueNumberToVariableId(cueNumber) {
+		return String(cueNumber).replace(/\./g, '_')
+	}
+
+	clearCueListTimers() {
+		if (this.cueListRefreshTimer !== undefined) {
+			clearTimeout(this.cueListRefreshTimer)
+			delete this.cueListRefreshTimer
+		}
+		if (this.cueListDefinitionsTimer !== undefined) {
+			clearTimeout(this.cueListDefinitionsTimer)
+			delete this.cueListDefinitionsTimer
+		}
+	}
+
+	/**
+	 * Forgets all cue list data and empties the related variables.
+	 */
+	clearCueList() {
+		if (this.cueListDefinitionsTimer !== undefined) {
+			clearTimeout(this.cueListDefinitionsTimer)
+			delete this.cueListDefinitionsTimer
+		}
+		this.cueListRecords = new Map()
+
+		// Drop the per-cue-number variables, and re-create the positional ones for the configured count.
+		this.cueListDefinedNumbers = []
+		this.setVariableDefinitions(GetVariableDefinitions(this))
+
+		const emptyValues = { cue_list_count: '' }
+		for (let i = 1; i <= this.getNumCuesToPoll(); i++) {
+			emptyValues[`cue_index_${i}_num`] = ''
+			emptyValues[`cue_index_${i}_label`] = ''
+		}
+		this.setInstanceStates(emptyValues, true)
+	}
+
+	/**
+	 * Requests the cues of the configured cue list from the console.
+	 * The console first answers with the cue count (see handleCueListCount).
+	 */
+	requestCueList() {
+		if (this.cueListRefreshTimer !== undefined) {
+			clearTimeout(this.cueListRefreshTimer)
+			delete this.cueListRefreshTimer
+		}
+		this.clearCueList()
+
+		if (this.isCueListPollingEnabled()) {
+			this.sendOsc(`/eos/get/cue/${this.getCueListToPoll()}/count`, [], false)
+		}
+	}
+
+	/**
+	 * Re-reads the cue list shortly, so a burst of change notifications results in a single refresh.
+	 */
+	scheduleCueListRefresh() {
+		if (this.cueListRefreshTimer !== undefined) {
+			clearTimeout(this.cueListRefreshTimer)
+		}
+		this.cueListRefreshTimer = setTimeout(() => {
+			delete this.cueListRefreshTimer
+			this.requestCueList()
+		}, 500)
+	}
+
+	handleCueListCount(cueList, count) {
+		if (Number(cueList) !== this.getCueListToPoll() || !this.isCueListPollingEnabled()) {
+			return
+		}
+
+		count = Number(count)
+		if (!Number.isFinite(count) || count < 0) {
+			return
+		}
+
+		this.setInstanceStates({ cue_list_count: String(count) }, true)
+
+		const toRequest = Math.min(count, this.getNumCuesToPoll())
+		for (let i = 0; i < toRequest; i++) {
+			this.sendOsc(`/eos/get/cue/${cueList}/index/${i}`, [], false)
+		}
+	}
+
+	handleCueListRecord(cueList, cueNumber, cuePart, index, label) {
+		if (Number(cueList) !== this.getCueListToPoll() || !this.isCueListPollingEnabled()) {
+			return
+		}
+
+		// Only the cue itself (part 0) is tracked, not its parts.
+		if (Number(cuePart) !== 0) {
+			return
+		}
+
+		index = Number(index)
+		if (!Number.isFinite(index) || index >= this.getNumCuesToPoll()) {
+			return
+		}
+
+		this.cueListRecords.set(index, { num: cueNumber, label: label || '' })
+		this.updateCueListVariables()
+	}
+
+	/**
+	 * Recomputes the cue_index_X_* variables, and the cue_N_label variables once their definitions exist.
+	 */
+	updateCueListVariables() {
+		const cues = [...this.cueListRecords.entries()].sort((a, b) => a[0] - b[0]).map((entry) => entry[1])
+
+		const values = {}
+		for (let i = 1; i <= this.getNumCuesToPoll(); i++) {
+			const cue = cues[i - 1]
+			values[`cue_index_${i}_num`] = cue ? cue.num : ''
+			values[`cue_index_${i}_label`] = cue ? cue.label : ''
+		}
+
+		const cueNumbers = cues.map((cue) => cue.num)
+		const definitionsChanged =
+			cueNumbers.length !== this.cueListDefinedNumbers.length ||
+			cueNumbers.some((num, i) => num !== this.cueListDefinedNumbers[i])
+
+		if (!definitionsChanged) {
+			for (const cue of cues) {
+				values[`cue_${this.cueNumberToVariableId(cue.num)}_label`] = cue.label
+			}
+		} else if (this.cueListDefinitionsTimer === undefined) {
+			// New cue numbers need new variable definitions. Batch them, as cues arrive one message at a time.
+			this.cueListDefinitionsTimer = setTimeout(() => {
+				delete this.cueListDefinitionsTimer
+				this.cueListDefinedNumbers = [...this.cueListRecords.entries()]
+					.sort((a, b) => a[0] - b[0])
+					.map((entry) => entry[1].num)
+				this.setVariableDefinitions(GetVariableDefinitions(this))
+				this.updateCueListVariables()
+			}, 250)
+		}
+
+		this.setInstanceStates(values, true)
 	}
 
 	/**

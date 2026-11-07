@@ -48,6 +48,8 @@ The **Use TCP SLIP** setting will use port 3037 with TCP 1.1 SLIP protocol, othe
 
 The **Labels to poll** setting controls how many `group_label_X`, `preset_label_X`, and `macro_label_X` variables are created and actively queried from the console.
 
+The **Cue list for cue variables** and **Cues to poll** settings control the per-cue variables described in **Cue list variables** below. Set either one to `0` to turn them off.
+
 ## Actions
 
 While it's not practical to create specific actions for every possible command available in your light console, some common actions/keys have been added, although the **Custom Command** action is the most flexible.
@@ -255,6 +257,21 @@ the fixture selected
 | catX_wheel_Y_oscname   | OSC path value (from label)           |
 
 There is a sample Stream Deck + configuration file in the github repository that demonstrates how this can be used effectively to manage all encoders on a single Stream Deck + page.
+
+## Cue list variables
+
+The module reads the cues of one cue list (set with **Cue list for cue variables**, default `1`), up to the **Cues to poll** count (default 30), and keeps them up to date when cues are added, changed or deleted on the console.
+
+| Variable                 | Description                                                                 | Example value |
+| ------------------------ | --------------------------------------------------------------------------- | ------------- |
+| cue_list_count           | Number of cues in the cue list                                              | 42            |
+| cue_index_X_num          | Cue number of the Xth cue in the list (X starts at 1)                       | 10.5          |
+| cue_index_X_label        | Label of the Xth cue in the list                                            | Blackout      |
+| cue_N_label              | Label of cue number N. Dots in the cue number become underscores.           | Blackout      |
+
+For example, cue 10.5's label is `$(etc-eos:cue_10_5_label)`, and a button showing the third cue in the list could use `$(etc-eos:cue_index_3_num)\n$(etc-eos:cue_index_3_label)`.
+
+`cue_N_label` variables are only created for cues that exist in the list. Cue parts aren't included.
 
 ## Group labels
 
