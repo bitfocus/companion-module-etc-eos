@@ -266,6 +266,44 @@ module.exports = function (self) {
 				self.setIntensity('group', id, value)
 			},
 		},
+		select_group: {
+			name: 'Select Group',
+			options: [
+				{
+					id: 'id',
+					type: 'textinput',
+					label: 'Group',
+					default: '1',
+					regex: Regex.FLOAT_OR_INT,
+					useVariables: true,
+				},
+				{
+					id: 'method',
+					type: 'dropdown',
+					label: 'Method',
+					default: 'osc',
+					tooltip:
+						"OSC selects the group without using the command line. Command line runs 'Group N Enter' as the module's User ID, replacing what's on that user's command line.",
+					choices: [
+						{ id: 'osc', label: 'OSC' },
+						{ id: 'cmd', label: 'Command line (Group N Enter)' },
+					],
+				},
+			],
+			callback: async (event, context) => {
+				const id = (await context.parseVariablesInString(event.options.id || '')).trim()
+				if (!/^\d+(\.\d+)?$/.test(id)) {
+					self.log('warn', `Select Group: '${id}' is not a group number`)
+					return
+				}
+
+				if (event.options.method === 'cmd') {
+					self.sendOsc('newcmd', [{ type: 's', value: `Group ${id}#` }])
+				} else {
+					self.sendOsc(`group/${id}`, [])
+				}
+			},
+		},
 		sub_intensity: {
 			name: 'Submaster Intensity',
 			options: [

@@ -67,6 +67,7 @@ While it's not practical to create specific actions for every possible command a
 | Press Key                      | Presses one of the console's keys. A full list of keys can be found in the latest [Eos Family Operations Manual](https://www.etcconnect.com/WorkArea/DownloadAsset.aspx?id=10737500523) (links to v2.9.1); do a search for `Eos OSC Keys` (use the value from the first column).                                                   |
 | Channel Intensity              | Sets a channel's intensity to a percentage, or to a keyword: `out`, `full`, `min`, `max`.                                                                                                                                                                                                                                          |
 | Group Intensity                | Sets a group's intensity to a percentage, or to a keyword: `out`, `full`, `min`, `max`.                                                                                                                                                                                                                                            |
+| Select Group                   | Selects a group, the same as `Group N Enter`. **Method** OSC leaves the command line alone; **Command line** types it on the module's User ID command line, replacing anything there.                                                                                                                                              |
 | Submaster Intensity            | Sets a submaster's intensity to a percentage, or to a keyword: `out`, `full`, `min`, `max`.                                                                                                                                                                                                                                        |
 | Submaster Bump                 | Simulates a submaster's bump button. The **State** property can be:<br /> - Press and Release<br /> - Press and Hold<br /> - Release<br /><br />_Hint: Add this action to a down/on action to **Press and Hold**, and a **Release** action to up/off, then make the button **Latch/Toggle**._                                      |
 | Fire Preset                    | Runs the preset given its number.                                                                                                                                                                                                                                                                                                  |
@@ -277,6 +278,8 @@ For example, cue 10.5's label is `$(etc-eos:cue_10_5_label)`, and a button showi
 
 To allow the use of buttons to select groups, and capture the group label for use on the buttons, there are a set of variables that hold this information.
 
+Use the **Select Group** action to select a group from a button, and put `$(etc-eos:group_label_N)` in the button's text to show its label. The **Groups** presets set up both for each group.
+
 The module captures group labels from `group_label_1` up to your configured **Labels to poll** value.
 
 By default this is:
@@ -304,6 +307,7 @@ Presets help you quickly configure new buttons. There are several presets availa
 | Cues     | Cue #                      | Runs the cue number. Adds feedback to show whether this cue is active or is pending. _Don't forget to change the cue number in the feedbacks too!_ |
 | Cues     | Go [CUE] [INTENSITY%]      | The same as the "Go" button on your console. Also shows the pending cue number and the cue's intensity as the button's text.                       |
 | Cues     | Stop/Back                  | The same as the "Stop/Back" button on your console.                                                                                                |
+| Groups   | G# [GROUP LABEL]           | Selects the group. Shows the group number and its label. One preset per group, up to **Labels to poll**.                                           |
 | Status   | [CURRENT CUE NUMBER/LABEL] | _No action when pressed._ Shows the number and label of the current cue.                                                                           |
 | Status   | [SHOW NAME]                | _No action when pressed._ Shows the name of the loaded show.                                                                                       |
 | Status   | [COMMAND LINE]             | _No action when pressed._ Shows the command line for the user (set in the module's config).                                                        |

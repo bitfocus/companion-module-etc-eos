@@ -94,6 +94,7 @@ class ModuleInstance extends InstanceBase {
 			await this.init(config)
 		} else if (currentNumLabels !== this.getNumLabelsToPoll()) {
 			this.updateVariableDefinitions()
+			this.updatePresets()
 			if (this.instanceState['connected']) {
 				this.getLabelNames()
 				this.requestCueList()

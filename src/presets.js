@@ -1,4 +1,5 @@
 const { combineRgb } = require('@companion-module/base')
+const constants = require('./constants.js')
 
 module.exports = function (self) {
 	const presets = {
@@ -135,6 +136,36 @@ module.exports = function (self) {
 	}
 
 	const numLabels = typeof self.getNumLabelsToPoll === 'function' ? self.getNumLabelsToPoll() : constants.DEFAULT_NUM_LABELS
+
+	for (let i = 1; i <= numLabels; i++) {
+		presets[`group_${i}`] = {
+			type: 'button',
+			category: 'Groups',
+			name: `Select group ${i}`,
+			style: {
+				text: `G${i}\n$(etc-eos:group_label_${i})`,
+				size: '14',
+				color: combineRgb(255, 255, 255),
+				bgcolor: combineRgb(0, 0, 0),
+				show_topbar: false,
+			},
+			steps: [
+				{
+					down: [
+						{
+							actionId: 'select_group',
+							options: {
+								id: `${i}`,
+								method: 'osc',
+							},
+						},
+					],
+					up: [],
+				},
+			],
+			feedbacks: [],
+		}
+	}
 
 	for (let i = 1; i <= numLabels; i++) {
 		presets[`macro_${i}`] = {
