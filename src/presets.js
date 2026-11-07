@@ -158,6 +158,7 @@ module.exports = function (self) {
 							options: {
 								id: `${i}`,
 								method: 'osc',
+								user: '',
 							},
 						},
 					],

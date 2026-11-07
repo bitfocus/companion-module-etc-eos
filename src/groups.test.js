@@ -21,6 +21,22 @@ describe('Select Group', () => {
 		expect(self.sendOsc).toHaveBeenCalledWith('newcmd', [{ type: 's', value: 'Group 12.5#' }])
 	})
 
+	test('can run as another user over OSC', async () => {
+		await action.callback({ options: { id: '2001', method: 'osc', user: '1' } }, context)
+		expect(self.sendOsc).toHaveBeenCalledWith('user/1/group/2001', [])
+	})
+
+	test('can run as another user on the command line', async () => {
+		await action.callback({ options: { id: '5', method: 'cmd', user: ' 1 ' } }, context)
+		expect(self.sendOsc).toHaveBeenCalledWith('user/1/newcmd', [{ type: 's', value: 'Group 5#' }])
+	})
+
+	test('ignores a user that is not a number', async () => {
+		await action.callback({ options: { id: '5', method: 'osc', user: 'one' } }, context)
+		expect(self.sendOsc).not.toHaveBeenCalled()
+		expect(self.log).toHaveBeenCalled()
+	})
+
 	test('ignores values that are not group numbers', async () => {
 		await action.callback({ options: { id: '5/full', method: 'osc' } }, context)
 		expect(self.sendOsc).not.toHaveBeenCalled()
@@ -43,7 +59,7 @@ describe('Group presets', () => {
 		expect(presets.group_5_5.style.text).toBe('G5.5\n$(etc-eos:group_label_5_5)')
 		expect(presets.group_2001.steps[0].down[0]).toEqual({
 			actionId: 'select_group',
-			options: { id: '2001', method: 'osc' },
+			options: { id: '2001', method: 'osc', user: '' },
 		})
 		expect(Object.keys(presets).filter((id) => id.startsWith('macro_'))).toEqual(['macro_90'])
 	})

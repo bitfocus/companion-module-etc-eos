@@ -283,11 +283,20 @@ module.exports = function (self) {
 					label: 'Method',
 					default: 'osc',
 					tooltip:
-						"OSC selects the group without using the command line. Command line runs 'Group N Enter' as the module's User ID, replacing what's on that user's command line.",
+						"OSC selects the group without using the command line. Command line runs 'Group N Enter', replacing what's on that user's command line.",
 					choices: [
 						{ id: 'osc', label: 'OSC' },
 						{ id: 'cmd', label: 'Command line (Group N Enter)' },
 					],
+				},
+				{
+					id: 'user',
+					type: 'textinput',
+					label: 'Run as user (blank = connection user)',
+					tooltip:
+						"Eos keeps a separate selection per user. Leave blank to select on this connection's User ID, or enter the user the console operator works as (e.g. 1) to select there.",
+					default: '',
+					useVariables: true,
 				},
 			],
 			callback: async (event, context) => {
@@ -297,10 +306,18 @@ module.exports = function (self) {
 					return
 				}
 
+				const user = (await context.parseVariablesInString(event.options.user || '')).trim()
+				if (user !== '' && !/^\d+$/.test(user)) {
+					self.log('warn', `Select Group: '${user}' is not a user number`)
+					return
+				}
+				// /eos/user/<N>/... runs a single command as that user, without changing the connection's user.
+				const prefix = user === '' ? '' : `user/${user}/`
+
 				if (event.options.method === 'cmd') {
-					self.sendOsc('newcmd', [{ type: 's', value: `Group ${id}#` }])
+					self.sendOsc(`${prefix}newcmd`, [{ type: 's', value: `Group ${id}#` }])
 				} else {
-					self.sendOsc(`group/${id}`, [])
+					self.sendOsc(`${prefix}group/${id}`, [])
 				}
 			},
 		},
