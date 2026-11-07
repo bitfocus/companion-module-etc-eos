@@ -127,4 +127,27 @@ describe('group/preset/macro labels', () => {
 		onMessage(reply('group', '1', 0, 'New'))
 		expect(instance.instanceState.group_label_1).toBe('New')
 	})
+
+	test.each([
+		'/eos/out/color/hs',
+		'/eos/out/active/chan',
+		'/eos/out/active/cue/text',
+		'/eos/out/pending/cue/text',
+		'/eos/out/previous/cue/text',
+		'/eos/out/user/1/cmd',
+		'/eos/out/active/wheel/1',
+		'/eos/out/get/group/1/list/0/1',
+	])('%s with no arguments does not error', (address) => {
+		instance.config.user_id = '1'
+		expect(() => onMessage({ address, args: [] })).not.toThrow()
+		expect(instance.log).not.toHaveBeenCalledWith('error', expect.anything())
+	})
+
+	test('an error while handling a message names the message', () => {
+		instance.parseCueName = () => {
+			throw new Error('boom')
+		}
+		onMessage({ address: '/eos/out/active/cue/text', args: [{ type: 's', value: 'x' }] })
+		expect(instance.log).toHaveBeenCalledWith('error', 'Error handling Eos message /eos/out/active/cue/text: boom')
+	})
 })

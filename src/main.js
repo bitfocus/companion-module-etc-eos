@@ -377,7 +377,7 @@ class ModuleInstance extends InstanceBase {
 		// const enc_wheel      = /^\/eos\/out\/active\/wheel\/(\d+),\s*(\w+)\s*\[(\w+)\]\(s\).\s+(\d+)\(i\),\s*([\d.]*)\(f\)$/
 		const enc_wheel = /^\/eos\/out\/active\/wheel\/(\d+)/
 
-		this.oscSocket.on('message', (message, self) => {
+		const handleMessage = (message) => {
 			if (this.debugToLogger) {
 				this.log('debug', `Eos OSC message: ${message.address}`)
 				this.log('debug', `  Eos OSC message args: ${JSON.stringify(message.args)}`)
@@ -395,7 +395,7 @@ class ModuleInstance extends InstanceBase {
 				)
 				this.checkFeedbacks('active_cue')
 			} else if (message.address === cueActiveText) {
-				this.parseCueName('active', message.args[0].value)
+				this.parseCueName('active', String(message.args?.[0]?.value ?? ''))
 			} else if ((matches = message.address.match(cuePending))) {
 				this.setInstanceStates(
 					{
@@ -414,7 +414,7 @@ class ModuleInstance extends InstanceBase {
 					true
 				)
 			} else if (message.address === cuePendingText) {
-				this.parseCueName('pending', message.args[0].value)
+				this.parseCueName('pending', String(message.args?.[0]?.value ?? ''))
 			} else if ((matches = message.address.match(cuePrevious))) {
 				this.setInstanceStates(
 					{
@@ -433,7 +433,7 @@ class ModuleInstance extends InstanceBase {
 					true
 				)
 			} else if (message.address === cuePreviousText) {
-				this.parseCueName('previous', message.args[0].value)
+				this.parseCueName('previous', String(message.args?.[0]?.value ?? ''))
 			} else if (message.address === showName && message.args.length === 1 && message.args[0].type === 's') {
 				this.setInstanceStates(
 					{
@@ -497,7 +497,7 @@ class ModuleInstance extends InstanceBase {
 				if (userid == this.config.user_id || this.config.user_id == '-1') {
 					this.setInstanceStates(
 						{
-							cmd: message.args[0].value,
+							cmd: message.args?.[0]?.value ?? '',
 						},
 						true
 					)
@@ -523,7 +523,8 @@ class ModuleInstance extends InstanceBase {
 				}, 100)
 			} else if ((matches = message.address.match(chan))) {
 				// This may be a better place to reset our parameter data variables
-				let chantext = message.args[0].value
+				// Empty when nothing is selected; some consoles send no argument at all then.
+				let chantext = String(message.args?.[0]?.value ?? '')
 				let chanarg_matches = chantext.match(/^(\d+)/)
 
 				if (chanarg_matches != null && chanarg_matches.length > 1) {
@@ -554,16 +555,23 @@ class ModuleInstance extends InstanceBase {
 				this.handleLabelListRecord(matches[1], matches[2], message.args?.[0]?.value, message.args?.[2]?.value)
 			} else if (message.address === colorhs) {
 				// this.log('debug', `HS: ${hue} ${sat}`)
+				const hue = Number(message.args?.[0]?.value)
+				const sat = Number(message.args?.[1]?.value)
+				if (message.args?.length < 2 || !Number.isFinite(hue) || !Number.isFinite(sat)) {
+					// No hue/saturation, e.g. the selection has no color parameters.
+					this.setInstanceStates({ hue: '', saturation: '' }, true)
+					return
+				}
 				this.setInstanceStates(
 					{
-						hue: message.args[0].value.toFixed(3),
-						saturation: message.args[1].value.toFixed(3),
-						enc_hue_floatval: message.args[0].value.toFixed(3),
-						enc_hue_stringval: message.args[0].value.toFixed(3).toString(),
-						enc_saturation_floatval: message.args[1].value.toFixed(3),
-						enc_saturation_stringval: message.args[1].value.toFixed(3).toString(),
-						enc_saturationv2_floatval: message.args[1].value.toFixed(3),
-						enc_saturationv2_stringval: message.args[1].value.toFixed(3).toString(),
+						hue: hue.toFixed(3),
+						saturation: sat.toFixed(3),
+						enc_hue_floatval: hue.toFixed(3),
+						enc_hue_stringval: hue.toFixed(3).toString(),
+						enc_saturation_floatval: sat.toFixed(3),
+						enc_saturation_stringval: sat.toFixed(3).toString(),
+						enc_saturationv2_floatval: sat.toFixed(3),
+						enc_saturationv2_stringval: sat.toFixed(3).toString(),
 					},
 					true
 				)
@@ -574,10 +582,10 @@ class ModuleInstance extends InstanceBase {
 				if (wheel_num >= 1) {
 					// this.log('debug', '***** wheel message: ' + JSON.stringify(message))
 					let wheelTimer
-					let wheel_label = message.args[0].value
+					let wheel_label = String(message.args?.[0]?.value ?? '')
 					let wheel_stringval = '0'
-					let wheel_cat = message.args[1].value || 0
-					let wheel_floatval = message.args[2].value
+					let wheel_cat = message.args?.[1]?.value || 0
+					let wheel_floatval = message.args?.[2]?.value
 					if (wheel_floatval != null) {
 						wheel_floatval = Number(wheel_floatval)
 						wheel_floatval = wheel_floatval.toFixed(3)
@@ -624,6 +632,15 @@ class ModuleInstance extends InstanceBase {
 						wheelTimer = setTimeout(this.doCategoryWheels, 100, this)
 					}
 				}
+			}
+		}
+
+		this.oscSocket.on('message', (message) => {
+			try {
+				handleMessage(message)
+			} catch (err) {
+				// Name the message, so an unexpected reply format can be traced from the log.
+				this.log('error', `Error handling Eos message ${message?.address}: ${err.message}`)
 			}
 		})
 
