@@ -202,6 +202,34 @@ describe('ModuleInstance', () => {
 			expect(instance.instanceState).toMatchObject({ cue_1_label: 'Preshow', cue_10_5_label: 'Blackout' })
 		})
 
+		test('reads the cue position from the first argument, not the address', () => {
+			instance.log = jest.fn()
+			instance.oscSocket = { on: jest.fn(), open: jest.fn(), socket: { on: jest.fn() } }
+			instance.setOscSocketListeners()
+			const onMessage = instance.oscSocket.on.mock.calls.find((call) => call[0] === 'message')[1]
+
+			// Eos replies to every cue with list/0/<arg count> in the address
+			const reply = (num, index, label) => ({
+				address: `/eos/out/get/cue/1/${num}/0/list/0/30`,
+				args: [
+					{ type: 'i', value: index },
+					{ type: 's', value: 'uid' },
+					{ type: 's', value: label },
+				],
+			})
+			onMessage(reply('1', 0, 'Preshow'))
+			onMessage(reply('2', 1, 'Top of show'))
+			onMessage(reply('4', 2, 'Blackout'))
+
+			expect(instance.instanceState).toMatchObject({
+				cue_index_1_num: '1',
+				cue_index_1_label: 'Preshow',
+				cue_index_2_num: '2',
+				cue_index_3_num: '4',
+				cue_index_3_label: 'Blackout',
+			})
+		})
+
 		test('a change notification re-reads the list once', () => {
 			instance.scheduleCueListRefresh()
 			instance.scheduleCueListRefresh()

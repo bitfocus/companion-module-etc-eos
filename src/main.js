@@ -461,7 +461,9 @@ class ModuleInstance extends InstanceBase {
 			} else if ((matches = message.address.match(cueListCount))) {
 				this.handleCueListCount(matches[1], message.args?.[0]?.value)
 			} else if ((matches = message.address.match(cueListRecord))) {
-				this.handleCueListRecord(matches[1], matches[2], matches[3], matches[4], message.args?.[2]?.value)
+				// The address ends in list/<arg offset>/<arg count>, which is about splitting long replies, not
+				// the cue's position. The cue's index in the list is the first argument; its label the third.
+				this.handleCueListRecord(matches[1], matches[2], matches[3], message.args?.[0]?.value, message.args?.[2]?.value)
 			} else if ((matches = message.address.match(cueListUpdated))) {
 				if (Number(matches[1]) === this.getCueListToPoll()) {
 					// A cue in our list was added, changed or deleted. Indexes may have shifted, so re-read the list.
@@ -826,20 +828,30 @@ class ModuleInstance extends InstanceBase {
 			return
 		}
 
-		index = Number(index)
-		if (!Number.isFinite(index) || index >= this.getNumCuesToPoll()) {
+		if (index === undefined || index === null || index === '' || !Number.isFinite(Number(index))) {
 			return
 		}
+		index = Number(index)
 
 		this.cueListRecords.set(index, { num: cueNumber, label: label || '' })
 		this.updateCueListVariables()
 	}
 
 	/**
+	 * The cues read so far, in list order, limited to the configured number of cues.
+	 */
+	getSortedCueListRecords() {
+		return [...this.cueListRecords.entries()]
+			.sort((a, b) => a[0] - b[0])
+			.slice(0, this.getNumCuesToPoll())
+			.map((entry) => entry[1])
+	}
+
+	/**
 	 * Recomputes the cue_index_X_* variables, and the cue_N_label variables once their definitions exist.
 	 */
 	updateCueListVariables() {
-		const cues = [...this.cueListRecords.entries()].sort((a, b) => a[0] - b[0]).map((entry) => entry[1])
+		const cues = this.getSortedCueListRecords()
 
 		const values = {}
 		for (let i = 1; i <= this.getNumCuesToPoll(); i++) {
@@ -861,9 +873,7 @@ class ModuleInstance extends InstanceBase {
 			// New cue numbers need new variable definitions. Batch them, as cues arrive one message at a time.
 			this.cueListDefinitionsTimer = setTimeout(() => {
 				delete this.cueListDefinitionsTimer
-				this.cueListDefinedNumbers = [...this.cueListRecords.entries()]
-					.sort((a, b) => a[0] - b[0])
-					.map((entry) => entry[1].num)
+				this.cueListDefinedNumbers = this.getSortedCueListRecords().map((cue) => cue.num)
 				this.setVariableDefinitions(GetVariableDefinitions(this))
 				this.updateCueListVariables()
 			}, 250)
