@@ -35,6 +35,14 @@ class ModuleInstance extends InstanceBase {
 		this.cueListRecords = new Map()
 		this.cueListDefinedNumbers = []
 
+		// Group/preset/macro labels, read by index so only targets that exist in the show are polled
+		this.labelLists = {}
+		this.labelDefinedNumbers = {}
+		for (const type of constants.LABEL_NAMES) {
+			this.labelLists[type] = { records: [], pending: undefined, expected: 0 }
+			this.labelDefinedNumbers[type] = []
+		}
+
 		this.updateActions() // export actions
 		this.updateFeedbacks() // export feedbacks
 		this.updateVariableDefinitions() // export variable definitions
@@ -61,6 +69,7 @@ class ModuleInstance extends InstanceBase {
 	// When module gets deleted
 	async destroy() {
 		this.clearCueListTimers()
+		this.clearLabelListTimers()
 
 		// Clear the reconnect timer if it exists.
 		if (this.reconnectTimer !== undefined) {
@@ -90,16 +99,17 @@ class ModuleInstance extends InstanceBase {
 		) {
 			this.closeOscSocket()
 			this.clearCueListTimers()
+			this.clearLabelListTimers()
 			this.eos_port = this.config.use_slip ? constants.EOS_PORT_SLIP : constants.EOS_PORT
 			await this.init(config)
-		} else if (currentNumLabels !== this.getNumLabelsToPoll()) {
-			this.updateVariableDefinitions()
-			this.updatePresets()
-			if (this.instanceState['connected']) {
-				this.getLabelNames()
-				this.requestCueList()
-			}
-		} else if (currentCueList !== this.getCueListToPoll() || currentNumCues !== this.getNumCuesToPoll()) {
+			return
+		}
+
+		if (currentNumLabels !== this.getNumLabelsToPoll() && this.instanceState['connected']) {
+			this.requestLabelLists()
+		}
+
+		if (currentCueList !== this.getCueListToPoll() || currentNumCues !== this.getNumCuesToPoll()) {
 			if (this.instanceState['connected']) {
 				this.requestCueList()
 			} else {
@@ -351,9 +361,9 @@ class ModuleInstance extends InstanceBase {
 		const softkey = /^\/eos\/out\/softkey\/(\d+)$/
 		const cmd = /^\/eos\/out\/user\/(\d+)\/cmd$/
 		const chan = '/eos/out/active/chan'
-		const groupNull = /^\/eos\/out\/get\/group\/([\d\.]+)$/
 		const colorhs = '/eos/out/color/hs'
 		const labels = /^\/eos\/out\/get\/(group|preset|macro)\/([\d\.]+)\/list\/([\d\.]+)\/([\d\.]+)$/
+		const labelsCount = /^\/eos\/out\/get\/(group|preset|macro)\/count$/
 		const labelsUpdated = /^\/eos\/out\/notify\/(group|preset|macro)\/list\/([\d\.]+)\/([\d\.]+)$/
 		const macro = /^\/eos\/out\/event\/macro\/(\d+)$/
 		const cueListCount = /^\/eos\/out\/get\/cue\/(\d+)\/count$/
@@ -459,6 +469,7 @@ class ModuleInstance extends InstanceBase {
 				// Reset the state when a show is loaded or a new show is created.
 				this.requestFullState()
 				this.requestCueList()
+				this.requestLabelLists()
 			} else if ((matches = message.address.match(cueListCount))) {
 				this.handleCueListCount(matches[1], message.args?.[0]?.value)
 			} else if ((matches = message.address.match(cueListRecord))) {
@@ -532,38 +543,15 @@ class ModuleInstance extends InstanceBase {
 				}
 			} 
 			
-			 else if ((matches = message.address.match(labelsUpdated))) {
-				// A label was updated, request new title
-				let label_type = matches[1]
-				let label_num = Number(message.args?.[1]?.value ?? matches[3])
-				if (Number.isFinite(label_num) && label_num <= this.getNumLabelsToPoll()) {
-					let message = `/eos/get/${label_type}`
-					// this.sendOsc('/eos/get/group/index', [ { type: 'i', value: group_num } ], false)
-					this.sendOsc(message, [{ type: 'i', value: label_num }], false)
-					// this.log('info', `Eos: Need to update group info: ${JSON.stringify(group_num)}`)
-				}
+			else if ((matches = message.address.match(labelsUpdated))) {
+				// Targets of this type were added, changed or deleted. Indexes may have shifted, so re-read them.
+				this.scheduleLabelListRefresh(matches[1])
+			} else if ((matches = message.address.match(labelsCount))) {
+				this.handleLabelListCount(matches[1], message.args?.[0]?.value)
 			} else if ((matches = message.address.match(labels))) {
-				let label_type = matches[1]// group, macro, preset , …
-				let label_num = matches[2]
-				this.log('info', `Eos: Capture group info: ${JSON.stringify(message)}`)
-				this.log('info', `Eos: Captured value for ${label_type} ${label_num} (${label_type}_label_${label_num}): ${message.args[2].value}`)
-				let label_string = message.args[2].value || ''
-				if (label_string) {
-					this.setInstanceStates(
-						{
-							[`${label_type}_label_${label_num}`]: label_string,
-						},
-						true
-					)
-				}
-			} else if ((matches = message.address.match(groupNull))) {
-				let group_num = matches[1]
-				this.setInstanceStates(
-					{
-						[`group_label_${group_num}`]: '',
-					},
-					true
-				)
+				// As with cues, the address ends in list/<arg offset>/<arg count>. The target's index in the
+				// list is the first argument and its label the third. Some replies have no label argument.
+				this.handleLabelListRecord(matches[1], matches[2], message.args?.[0]?.value, message.args?.[2]?.value)
 			} else if (message.address === colorhs) {
 				// this.log('debug', `HS: ${hue} ${sat}`)
 				this.setInstanceStates(
@@ -649,6 +637,7 @@ class ModuleInstance extends InstanceBase {
 			this.setConnectionState(true)
 			this.requestFullState()
 			this.requestCueList()
+			this.requestLabelLists()
 		})
 
 		// this.oscSocket.socket.on('ready', () => { })
@@ -717,18 +706,154 @@ class ModuleInstance extends InstanceBase {
 		this.emptyWheelData()
 	}
 
-	/**
-	 * Request Label names from console
-	 * **/
-	getLabelNames(){
-		const numLabels = this.getNumLabelsToPoll()
-		for (let name = 0; name < constants.LABEL_NAMES.length; name++) {
-			const element = constants.LABEL_NAMES[name];
-			for (let i = 1; i <= numLabels; i++) {
-				const message = `/eos/get/${element}`
-				// this.sendOsc('/eos/get/group/index', [ { type: 'i', value: i } ], false)
-				this.sendOsc(message, [{ type: 'i', value: i }], false)
+	clearLabelListTimers() {
+		for (const list of Object.values(this.labelLists || {})) {
+			for (const timer of ['refreshTimer', 'pendingTimer']) {
+				if (list[timer] !== undefined) {
+					clearTimeout(list[timer])
+					delete list[timer]
+				}
 			}
+		}
+		if (this.labelDefinitionsTimer !== undefined) {
+			clearTimeout(this.labelDefinitionsTimer)
+			delete this.labelDefinitionsTimer
+		}
+	}
+
+	/**
+	 * Requests the group, preset and macro labels from the console.
+	 */
+	requestLabelLists() {
+		for (const type of constants.LABEL_NAMES) {
+			this.requestLabelList(type)
+		}
+	}
+
+	/**
+	 * Asks the console how many targets of this type exist. The answer is handled by handleLabelListCount,
+	 * which then requests each one by index. The current values stay until the new ones have arrived.
+	 */
+	requestLabelList(type) {
+		const list = this.labelLists[type]
+		if (list.refreshTimer !== undefined) {
+			clearTimeout(list.refreshTimer)
+			delete list.refreshTimer
+		}
+		this.sendOsc(`/eos/get/${type}/count`, [], false)
+	}
+
+	/**
+	 * Re-reads a label list shortly, so a burst of change notifications results in a single refresh.
+	 */
+	scheduleLabelListRefresh(type) {
+		const list = this.labelLists[type]
+		if (list.refreshTimer !== undefined) {
+			clearTimeout(list.refreshTimer)
+		}
+		list.refreshTimer = setTimeout(() => {
+			delete list.refreshTimer
+			this.requestLabelList(type)
+		}, 500)
+	}
+
+	handleLabelListCount(type, count) {
+		const list = this.labelLists[type]
+		count = Number(count)
+		if (!list || !Number.isFinite(count) || count < 0) {
+			return
+		}
+
+		if (list.pendingTimer !== undefined) {
+			clearTimeout(list.pendingTimer)
+			delete list.pendingTimer
+		}
+
+		list.pending = new Map()
+		list.expected = Math.min(count, this.getNumLabelsToPoll())
+		if (list.expected === 0) {
+			this.applyLabelList(type)
+			return
+		}
+
+		for (let i = 0; i < list.expected; i++) {
+			this.sendOsc(`/eos/get/${type}/index/${i}`, [], false)
+		}
+
+		// Don't wait forever if a reply goes missing; use what has arrived.
+		list.pendingTimer = setTimeout(() => {
+			delete list.pendingTimer
+			this.applyLabelList(type)
+		}, 5000)
+	}
+
+	handleLabelListRecord(type, targetNumber, index, label) {
+		const list = this.labelLists[type]
+		if (!list || list.pending === undefined) {
+			// Not part of a list we asked for.
+			return
+		}
+		if (index === undefined || index === null || index === '' || !Number.isFinite(Number(index))) {
+			return
+		}
+		index = Number(index)
+		if (index >= list.expected) {
+			return
+		}
+
+		list.pending.set(index, { num: targetNumber, label: label === undefined || label === null ? '' : String(label) })
+		if (list.pending.size >= list.expected) {
+			this.applyLabelList(type)
+		}
+	}
+
+	/**
+	 * Replaces a type's labels with the newly read ones, and updates the variables (and presets) to match.
+	 */
+	applyLabelList(type) {
+		const list = this.labelLists[type]
+		if (list.pending === undefined) {
+			return
+		}
+		if (list.pendingTimer !== undefined) {
+			clearTimeout(list.pendingTimer)
+			delete list.pendingTimer
+		}
+
+		list.records = [...list.pending.entries()].sort((a, b) => a[0] - b[0]).map((entry) => entry[1])
+		list.pending = undefined
+
+		const numbers = list.records.map((record) => record.num)
+		const defined = this.labelDefinedNumbers[type]
+		const definitionsChanged = numbers.length !== defined.length || numbers.some((num, i) => num !== defined[i])
+
+		if (definitionsChanged) {
+			// Batch definition and preset rebuilds, as the three types usually arrive together.
+			if (this.labelDefinitionsTimer === undefined) {
+				this.labelDefinitionsTimer = setTimeout(() => {
+					delete this.labelDefinitionsTimer
+					for (const t of constants.LABEL_NAMES) {
+						this.labelDefinedNumbers[t] = this.labelLists[t].records.map((record) => record.num)
+					}
+					this.setVariableDefinitions(GetVariableDefinitions(this))
+					this.updatePresets()
+					for (const t of constants.LABEL_NAMES) {
+						this.setLabelListValues(t)
+					}
+				}, 100)
+			}
+		} else {
+			this.setLabelListValues(type)
+		}
+	}
+
+	setLabelListValues(type) {
+		const values = {}
+		for (const record of this.labelLists[type].records) {
+			values[`${type}_label_${this.cueNumberToVariableId(record.num)}`] = record.label
+		}
+		if (Object.keys(values).length > 0) {
+			this.setInstanceStates(values, true)
 		}
 	}
 
@@ -900,9 +1025,8 @@ class ModuleInstance extends InstanceBase {
 
 		this.sendOsc('get/version', [])
 
-		// Get xx groups worth of labels - issue the request here to get the values,
-		// they are caught in the on.message elsewhere
-		this.getLabelNames()
+		// Labels aren't requested here: this runs on every channel selection change, and labels don't depend
+		// on the selection. They're read on connect, on show load, and when the console reports a change.
 	}
 
 	/**

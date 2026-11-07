@@ -29,14 +29,22 @@ describe('Select Group', () => {
 })
 
 describe('Group presets', () => {
-	test('one select-group preset per polled label, showing the label', () => {
-		const self = { setPresetDefinitions: jest.fn(), getNumLabelsToPoll: () => 3 }
+	test('one select-group preset per group in the show, showing its label', () => {
+		const self = {
+			setPresetDefinitions: jest.fn(),
+			labelDefinedNumbers: { group: ['1', '2001', '5.5'], macro: ['90'], preset: [] },
+		}
 		UpdatePresetDefinitions(self)
 		const presets = self.setPresetDefinitions.mock.calls[0][0]
 
 		const groups = Object.keys(presets).filter((id) => id.startsWith('group_'))
-		expect(groups).toEqual(['group_1', 'group_2', 'group_3'])
-		expect(presets.group_3.style.text).toBe('G3\n$(etc-eos:group_label_3)')
-		expect(presets.group_3.steps[0].down[0]).toEqual({ actionId: 'select_group', options: { id: '3', method: 'osc' } })
+		expect(groups).toEqual(['group_1', 'group_2001', 'group_5_5'])
+		expect(presets.group_2001.style.text).toBe('G2001\n$(etc-eos:group_label_2001)')
+		expect(presets.group_5_5.style.text).toBe('G5.5\n$(etc-eos:group_label_5_5)')
+		expect(presets.group_2001.steps[0].down[0]).toEqual({
+			actionId: 'select_group',
+			options: { id: '2001', method: 'osc' },
+		})
+		expect(Object.keys(presets).filter((id) => id.startsWith('macro_'))).toEqual(['macro_90'])
 	})
 })

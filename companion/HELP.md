@@ -46,7 +46,7 @@ _A User ID of `-1` refers to whichever user the console is currently set to._
 
 The **Use TCP SLIP** setting will use port 3037 with TCP 1.1 SLIP protocol, otherwise it will use port 3032. This is a new option since EOS 3.1 for 3rd party connections.
 
-The **Labels to poll** setting controls how many `group_label_X`, `preset_label_X`, and `macro_label_X` variables are created and actively queried from the console.
+The **Labels to poll** setting is the most groups, presets and macros (each) whose labels are read from the console. Only ones that exist in the show are read, so with 200 groups a setting of 9999 reads 200 groups, not 9999. Labels are read on connect, when a show is loaded, and when they change on the console.
 
 The **Cue list for cue variables** and **Cues to poll** settings control the per-cue variables described in **Cue list variables** below. Set either one to `0` to turn them off.
 
@@ -280,11 +280,7 @@ To allow the use of buttons to select groups, and capture the group label for us
 
 Use the **Select Group** action to select a group from a button, and put `$(etc-eos:group_label_N)` in the button's text to show its label. The **Groups** presets set up both for each group.
 
-The module captures group labels from `group_label_1` up to your configured **Labels to poll** value.
-
-By default this is:
-
-group_label_1 through group_label_30
+The module creates a `group_label_N` variable for each group in the show (likewise `preset_label_N` and `macro_label_N`), up to the **Labels to poll** count, in the order they appear in the console's list. N is the group number; dots become underscores, so group 5.5's label is `$(etc-eos:group_label_5_5)`. Groups that don't exist have no variable.
 
 ## Feedbacks
 
@@ -307,7 +303,7 @@ Presets help you quickly configure new buttons. There are several presets availa
 | Cues     | Cue #                      | Runs the cue number. Adds feedback to show whether this cue is active or is pending. _Don't forget to change the cue number in the feedbacks too!_ |
 | Cues     | Go [CUE] [INTENSITY%]      | The same as the "Go" button on your console. Also shows the pending cue number and the cue's intensity as the button's text.                       |
 | Cues     | Stop/Back                  | The same as the "Stop/Back" button on your console.                                                                                                |
-| Groups   | G# [GROUP LABEL]           | Selects the group. Shows the group number and its label. One preset per group, up to **Labels to poll**.                                           |
+| Groups   | G# [GROUP LABEL]           | Selects the group. Shows the group number and its label. One preset per group in the show.                                                          |
 | Status   | [CURRENT CUE NUMBER/LABEL] | _No action when pressed._ Shows the number and label of the current cue.                                                                           |
 | Status   | [SHOW NAME]                | _No action when pressed._ Shows the name of the loaded show.                                                                                       |
 | Status   | [COMMAND LINE]             | _No action when pressed._ Shows the command line for the user (set in the module's config).                                                        |

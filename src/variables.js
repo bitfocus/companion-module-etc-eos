@@ -71,13 +71,11 @@ const GetVariableDefinitions = function (self) {
 		variableDefinitions.push({ variableId: `softkey_label_${i}`, name: `Soft key ${i}'s label` })
 	}
 
-	// Titles
-	 // add other labels here. Intensity palette, Focus palette … 
-	const numLabels = typeof self.getNumLabelsToPoll === 'function' ? self.getNumLabelsToPoll() : constants.DEFAULT_NUM_LABELS
-	for (let name = 0; name < constants.LABEL_NAMES.length; name++) {
-		const element = constants.LABEL_NAMES[name];
-		for (let i = 1; i <= numLabels; i++) {
-			variableDefinitions.push({ variableId: `${element}_label_${i}`, name: `${element} ${i}'s label` })
+	// Group, preset and macro labels: only for targets that exist in the show (read by index from the console)
+	for (const type of constants.LABEL_NAMES) {
+		for (const num of self.labelDefinedNumbers?.[type] || []) {
+			const id = String(num).replace(/\./g, '_')
+			variableDefinitions.push({ variableId: `${type}_label_${id}`, name: `${type} ${num}'s label` })
 		}
 	}
 

@@ -1,5 +1,4 @@
 const { combineRgb } = require('@companion-module/base')
-const constants = require('./constants.js')
 
 module.exports = function (self) {
 	const presets = {
@@ -135,15 +134,17 @@ module.exports = function (self) {
 		},
 	}
 
-	const numLabels = typeof self.getNumLabelsToPoll === 'function' ? self.getNumLabelsToPoll() : constants.DEFAULT_NUM_LABELS
+	// Group and macro presets exist only for targets in the show (read by index from the console)
+	const targetNumbers = (type) => self.labelDefinedNumbers?.[type] || []
+	const variableId = (num) => String(num).replace(/\./g, '_')
 
-	for (let i = 1; i <= numLabels; i++) {
-		presets[`group_${i}`] = {
+	for (const i of targetNumbers('group')) {
+		presets[`group_${variableId(i)}`] = {
 			type: 'button',
 			category: 'Groups',
 			name: `Select group ${i}`,
 			style: {
-				text: `G${i}\n$(etc-eos:group_label_${i})`,
+				text: `G${i}\n$(etc-eos:group_label_${variableId(i)})`,
 				size: '14',
 				color: combineRgb(255, 255, 255),
 				bgcolor: combineRgb(0, 0, 0),
@@ -167,13 +168,13 @@ module.exports = function (self) {
 		}
 	}
 
-	for (let i = 1; i <= numLabels; i++) {
-		presets[`macro_${i}`] = {
+	for (const i of targetNumbers('macro')) {
+		presets[`macro_${variableId(i)}`] = {
 			type: 'button',
 			category: `Macros`,
 			name: `Macro ${i}`,
 			style: {
-				text: `M${i}\n$(etc-eos:macro_label_${i})`,
+				text: `M${i}\n$(etc-eos:macro_label_${variableId(i)})`,
 				size: '14',
 				color: combineRgb(255, 255, 255),
 				bgcolor: combineRgb(0, 0, 0),
