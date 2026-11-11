@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [18.x]
+        node-version: [26.x]
 
     steps:
       - uses: actions/checkout@v4
@@ -22,7 +22,8 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: Prepare Environment
         run: |
-          yarn install
+          npm install --global yarn@1.22.22
+          yarn install --frozen-lockfile
         env:
           CI: true
       # TODO(Peter): No prettier until we resolve the constants file
