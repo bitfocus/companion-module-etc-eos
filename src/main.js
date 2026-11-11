@@ -31,6 +31,18 @@ class ModuleInstance extends InstanceBase {
 		this.wheels = []
 		this.emptyWheelData() // clear out encoder wheel values
 
+		// Cues of the configured cue list, keyed by their Eos index (0-based)
+		this.cueListRecords = new Map()
+		this.cueListDefinedNumbers = []
+
+		// Group/preset/macro labels, read by index so only targets that exist in the show are polled
+		this.labelLists = {}
+		this.labelDefinedNumbers = {}
+		for (const type of constants.LABEL_NAMES) {
+			this.labelLists[type] = { records: [], pending: undefined, expected: 0 }
+			this.labelDefinedNumbers[type] = []
+		}
+
 		this.updateActions() // export actions
 		this.updateFeedbacks() // export feedbacks
 		this.updateVariableDefinitions() // export variable definitions
@@ -56,6 +68,9 @@ class ModuleInstance extends InstanceBase {
 
 	// When module gets deleted
 	async destroy() {
+		this.clearCueListTimers()
+		this.clearLabelListTimers()
+
 		// Clear the reconnect timer if it exists.
 		if (this.reconnectTimer !== undefined) {
 			clearInterval(this.reconnectTimer)
@@ -72,6 +87,8 @@ class ModuleInstance extends InstanceBase {
 		let currentUserId = this.config.user_id
 		let currentUseSlip = this.config.use_slip
 		let currentNumLabels = this.getNumLabelsToPoll()
+		let currentCueList = this.getCueListToPoll()
+		let currentNumCues = this.getNumCuesToPoll()
 
 		this.config = config
 
@@ -81,12 +98,22 @@ class ModuleInstance extends InstanceBase {
 			currentUseSlip !== this.config.use_slip
 		) {
 			this.closeOscSocket()
+			this.clearCueListTimers()
+			this.clearLabelListTimers()
 			this.eos_port = this.config.use_slip ? constants.EOS_PORT_SLIP : constants.EOS_PORT
 			await this.init(config)
-		} else if (currentNumLabels !== this.getNumLabelsToPoll()) {
-			this.updateVariableDefinitions()
+			return
+		}
+
+		if (currentNumLabels !== this.getNumLabelsToPoll() && this.instanceState['connected']) {
+			this.requestLabelLists()
+		}
+
+		if (currentCueList !== this.getCueListToPoll() || currentNumCues !== this.getNumCuesToPoll()) {
 			if (this.instanceState['connected']) {
-				this.getLabelNames()
+				this.requestCueList()
+			} else {
+				this.clearCueList()
 			}
 		}
 	}
@@ -136,7 +163,52 @@ class ModuleInstance extends InstanceBase {
 				max: 9999,
 				required: true,
 			},
+			{
+				type: 'number',
+				id: 'cue_list',
+				label: 'Cue list for cue variables (0 = off)',
+				default: constants.DEFAULT_CUE_LIST,
+				min: 0,
+				max: 999,
+				width: 6,
+				required: true,
+			},
+			{
+				type: 'number',
+				id: 'num_cues',
+				label: 'Cues to poll',
+				default: constants.DEFAULT_NUM_CUES,
+				min: 0,
+				max: 9999,
+				width: 6,
+				required: true,
+			},
 		]
+	}
+
+	getCueListToPoll() {
+		let configuredValue = Number(this.config?.cue_list)
+		if (Number.isFinite(configuredValue) && configuredValue >= 0) {
+			return Math.floor(configuredValue)
+		}
+
+		return constants.DEFAULT_CUE_LIST
+	}
+
+	getNumCuesToPoll() {
+		let configuredValue = Number(this.config?.num_cues)
+		if (Number.isFinite(configuredValue) && configuredValue >= 0) {
+			return Math.floor(configuredValue)
+		}
+
+		return constants.DEFAULT_NUM_CUES
+	}
+
+	/**
+	 * Cue lists can't be polled when the list or the number of cues is 0.
+	 */
+	isCueListPollingEnabled() {
+		return this.getCueListToPoll() > 0 && this.getNumCuesToPoll() > 0
 	}
 
 	getNumLabelsToPoll() {
@@ -289,11 +361,14 @@ class ModuleInstance extends InstanceBase {
 		const softkey = /^\/eos\/out\/softkey\/(\d+)$/
 		const cmd = /^\/eos\/out\/user\/(\d+)\/cmd$/
 		const chan = '/eos/out/active/chan'
-		const groupNull = /^\/eos\/out\/get\/group\/([\d\.]+)$/
 		const colorhs = '/eos/out/color/hs'
 		const labels = /^\/eos\/out\/get\/(group|preset|macro)\/([\d\.]+)\/list\/([\d\.]+)\/([\d\.]+)$/
+		const labelsCount = /^\/eos\/out\/get\/(group|preset|macro)\/count$/
 		const labelsUpdated = /^\/eos\/out\/notify\/(group|preset|macro)\/list\/([\d\.]+)\/([\d\.]+)$/
 		const macro = /^\/eos\/out\/event\/macro\/(\d+)$/
+		const cueListCount = /^\/eos\/out\/get\/cue\/(\d+)\/count$/
+		const cueListRecord = /^\/eos\/out\/get\/cue\/(\d+)\/([\d\.]+)\/(\d+)\/list\/(\d+)\/(\d+)$/
+		const cueListUpdated = /^\/eos\/out\/notify\/cue\/(\d+)\/list\/(\d+)\/(\d+)$/
 
 		// Maybe for later
 		// const groupChannels = /^\/eos\/out\/get\/group\/([\d\.]+)\/channels\/list\/([\d\.]+)/([\d\.]+)$/
@@ -302,7 +377,7 @@ class ModuleInstance extends InstanceBase {
 		// const enc_wheel      = /^\/eos\/out\/active\/wheel\/(\d+),\s*(\w+)\s*\[(\w+)\]\(s\).\s+(\d+)\(i\),\s*([\d.]*)\(f\)$/
 		const enc_wheel = /^\/eos\/out\/active\/wheel\/(\d+)/
 
-		this.oscSocket.on('message', (message, self) => {
+		const handleMessage = (message) => {
 			if (this.debugToLogger) {
 				this.log('debug', `Eos OSC message: ${message.address}`)
 				this.log('debug', `  Eos OSC message args: ${JSON.stringify(message.args)}`)
@@ -320,7 +395,7 @@ class ModuleInstance extends InstanceBase {
 				)
 				this.checkFeedbacks('active_cue')
 			} else if (message.address === cueActiveText) {
-				this.parseCueName('active', message.args[0].value)
+				this.parseCueName('active', String(message.args?.[0]?.value ?? ''))
 			} else if ((matches = message.address.match(cuePending))) {
 				this.setInstanceStates(
 					{
@@ -339,7 +414,7 @@ class ModuleInstance extends InstanceBase {
 					true
 				)
 			} else if (message.address === cuePendingText) {
-				this.parseCueName('pending', message.args[0].value)
+				this.parseCueName('pending', String(message.args?.[0]?.value ?? ''))
 			} else if ((matches = message.address.match(cuePrevious))) {
 				this.setInstanceStates(
 					{
@@ -358,7 +433,7 @@ class ModuleInstance extends InstanceBase {
 					true
 				)
 			} else if (message.address === cuePreviousText) {
-				this.parseCueName('previous', message.args[0].value)
+				this.parseCueName('previous', String(message.args?.[0]?.value ?? ''))
 			} else if (message.address === showName && message.args.length === 1 && message.args[0].type === 's') {
 				this.setInstanceStates(
 					{
@@ -393,6 +468,19 @@ class ModuleInstance extends InstanceBase {
 			} else if (message.address === showLoaded || message.address === showCleared) {
 				// Reset the state when a show is loaded or a new show is created.
 				this.requestFullState()
+				this.requestCueList()
+				this.requestLabelLists()
+			} else if ((matches = message.address.match(cueListCount))) {
+				this.handleCueListCount(matches[1], message.args?.[0]?.value)
+			} else if ((matches = message.address.match(cueListRecord))) {
+				// The address ends in list/<arg offset>/<arg count>, which is about splitting long replies, not
+				// the cue's position. The cue's index in the list is the first argument; its label the third.
+				this.handleCueListRecord(matches[1], matches[2], matches[3], message.args?.[0]?.value, message.args?.[2]?.value)
+			} else if ((matches = message.address.match(cueListUpdated))) {
+				if (Number(matches[1]) === this.getCueListToPoll()) {
+					// A cue in our list was added, changed or deleted. Indexes may have shifted, so re-read the list.
+					this.scheduleCueListRefresh()
+				}
 			} else if (
 				(matches = message.address.match(softkey)) &&
 				message.args.length === 1 &&
@@ -409,7 +497,7 @@ class ModuleInstance extends InstanceBase {
 				if (userid == this.config.user_id || this.config.user_id == '-1') {
 					this.setInstanceStates(
 						{
-							cmd: message.args[0].value,
+							cmd: message.args?.[0]?.value ?? '',
 						},
 						true
 					)
@@ -435,7 +523,8 @@ class ModuleInstance extends InstanceBase {
 				}, 100)
 			} else if ((matches = message.address.match(chan))) {
 				// This may be a better place to reset our parameter data variables
-				let chantext = message.args[0].value
+				// Empty when nothing is selected; some consoles send no argument at all then.
+				let chantext = String(message.args?.[0]?.value ?? '')
 				let chanarg_matches = chantext.match(/^(\d+)/)
 
 				if (chanarg_matches != null && chanarg_matches.length > 1) {
@@ -455,50 +544,34 @@ class ModuleInstance extends InstanceBase {
 				}
 			} 
 			
-			 else if ((matches = message.address.match(labelsUpdated))) {
-				// A label was updated, request new title
-				let label_type = matches[1]
-				let label_num = Number(message.args?.[1]?.value ?? matches[3])
-				if (Number.isFinite(label_num) && label_num <= this.getNumLabelsToPoll()) {
-					let message = `/eos/get/${label_type}`
-					// this.sendOsc('/eos/get/group/index', [ { type: 'i', value: group_num } ], false)
-					this.sendOsc(message, [{ type: 'i', value: label_num }], false)
-					// this.log('info', `Eos: Need to update group info: ${JSON.stringify(group_num)}`)
-				}
+			else if ((matches = message.address.match(labelsUpdated))) {
+				// Targets of this type were added, changed or deleted. Indexes may have shifted, so re-read them.
+				this.scheduleLabelListRefresh(matches[1])
+			} else if ((matches = message.address.match(labelsCount))) {
+				this.handleLabelListCount(matches[1], message.args?.[0]?.value)
 			} else if ((matches = message.address.match(labels))) {
-				let label_type = matches[1]// group, macro, preset , …
-				let label_num = matches[2]
-				this.log('info', `Eos: Capture group info: ${JSON.stringify(message)}`)
-				this.log('info', `Eos: Captured value for ${label_type} ${label_num} (${label_type}_label_${label_num}): ${message.args[2].value}`)
-				let label_string = message.args[2].value || ''
-				if (label_string) {
-					this.setInstanceStates(
-						{
-							[`${label_type}_label_${label_num}`]: label_string,
-						},
-						true
-					)
-				}
-			} else if ((matches = message.address.match(groupNull))) {
-				let group_num = matches[1]
-				this.setInstanceStates(
-					{
-						[`group_label_${group_num}`]: '',
-					},
-					true
-				)
+				// As with cues, the address ends in list/<arg offset>/<arg count>. The target's index in the
+				// list is the first argument and its label the third. Some replies have no label argument.
+				this.handleLabelListRecord(matches[1], matches[2], message.args?.[0]?.value, message.args?.[2]?.value)
 			} else if (message.address === colorhs) {
 				// this.log('debug', `HS: ${hue} ${sat}`)
+				const hue = Number(message.args?.[0]?.value)
+				const sat = Number(message.args?.[1]?.value)
+				if (message.args?.length < 2 || !Number.isFinite(hue) || !Number.isFinite(sat)) {
+					// No hue/saturation, e.g. the selection has no color parameters.
+					this.setInstanceStates({ hue: '', saturation: '' }, true)
+					return
+				}
 				this.setInstanceStates(
 					{
-						hue: message.args[0].value.toFixed(3),
-						saturation: message.args[1].value.toFixed(3),
-						enc_hue_floatval: message.args[0].value.toFixed(3),
-						enc_hue_stringval: message.args[0].value.toFixed(3).toString(),
-						enc_saturation_floatval: message.args[1].value.toFixed(3),
-						enc_saturation_stringval: message.args[1].value.toFixed(3).toString(),
-						enc_saturationv2_floatval: message.args[1].value.toFixed(3),
-						enc_saturationv2_stringval: message.args[1].value.toFixed(3).toString(),
+						hue: hue.toFixed(3),
+						saturation: sat.toFixed(3),
+						enc_hue_floatval: hue.toFixed(3),
+						enc_hue_stringval: hue.toFixed(3).toString(),
+						enc_saturation_floatval: sat.toFixed(3),
+						enc_saturation_stringval: sat.toFixed(3).toString(),
+						enc_saturationv2_floatval: sat.toFixed(3),
+						enc_saturationv2_stringval: sat.toFixed(3).toString(),
 					},
 					true
 				)
@@ -509,10 +582,10 @@ class ModuleInstance extends InstanceBase {
 				if (wheel_num >= 1) {
 					// this.log('debug', '***** wheel message: ' + JSON.stringify(message))
 					let wheelTimer
-					let wheel_label = message.args[0].value
+					let wheel_label = String(message.args?.[0]?.value ?? '')
 					let wheel_stringval = '0'
-					let wheel_cat = message.args[1].value || 0
-					let wheel_floatval = message.args[2].value
+					let wheel_cat = message.args?.[1]?.value || 0
+					let wheel_floatval = message.args?.[2]?.value
 					if (wheel_floatval != null) {
 						wheel_floatval = Number(wheel_floatval)
 						wheel_floatval = wheel_floatval.toFixed(3)
@@ -560,6 +633,15 @@ class ModuleInstance extends InstanceBase {
 					}
 				}
 			}
+		}
+
+		this.oscSocket.on('message', (message) => {
+			try {
+				handleMessage(message)
+			} catch (err) {
+				// Name the message, so an unexpected reply format can be traced from the log.
+				this.log('error', `Error handling Eos message ${message?.address}: ${err.message}`)
+			}
 		})
 
 		this.oscSocket.open()
@@ -571,6 +653,8 @@ class ModuleInstance extends InstanceBase {
 		this.oscSocket.socket.on('connect', () => {
 			this.setConnectionState(true)
 			this.requestFullState()
+			this.requestCueList()
+			this.requestLabelLists()
 		})
 
 		// this.oscSocket.socket.on('ready', () => { })
@@ -639,19 +723,306 @@ class ModuleInstance extends InstanceBase {
 		this.emptyWheelData()
 	}
 
-	/**
-	 * Request Label names from console
-	 * **/
-	getLabelNames(){
-		const numLabels = this.getNumLabelsToPoll()
-		for (let name = 0; name < constants.LABEL_NAMES.length; name++) {
-			const element = constants.LABEL_NAMES[name];
-			for (let i = 1; i <= numLabels; i++) {
-				const message = `/eos/get/${element}`
-				// this.sendOsc('/eos/get/group/index', [ { type: 'i', value: i } ], false)
-				this.sendOsc(message, [{ type: 'i', value: i }], false)
+	clearLabelListTimers() {
+		for (const list of Object.values(this.labelLists || {})) {
+			for (const timer of ['refreshTimer', 'pendingTimer']) {
+				if (list[timer] !== undefined) {
+					clearTimeout(list[timer])
+					delete list[timer]
+				}
 			}
 		}
+		if (this.labelDefinitionsTimer !== undefined) {
+			clearTimeout(this.labelDefinitionsTimer)
+			delete this.labelDefinitionsTimer
+		}
+	}
+
+	/**
+	 * Requests the group, preset and macro labels from the console.
+	 */
+	requestLabelLists() {
+		for (const type of constants.LABEL_NAMES) {
+			this.requestLabelList(type)
+		}
+	}
+
+	/**
+	 * Asks the console how many targets of this type exist. The answer is handled by handleLabelListCount,
+	 * which then requests each one by index. The current values stay until the new ones have arrived.
+	 */
+	requestLabelList(type) {
+		const list = this.labelLists[type]
+		if (list.refreshTimer !== undefined) {
+			clearTimeout(list.refreshTimer)
+			delete list.refreshTimer
+		}
+		this.sendOsc(`/eos/get/${type}/count`, [], false)
+	}
+
+	/**
+	 * Re-reads a label list shortly, so a burst of change notifications results in a single refresh.
+	 */
+	scheduleLabelListRefresh(type) {
+		const list = this.labelLists[type]
+		if (list.refreshTimer !== undefined) {
+			clearTimeout(list.refreshTimer)
+		}
+		list.refreshTimer = setTimeout(() => {
+			delete list.refreshTimer
+			this.requestLabelList(type)
+		}, 500)
+	}
+
+	handleLabelListCount(type, count) {
+		const list = this.labelLists[type]
+		count = Number(count)
+		if (!list || !Number.isFinite(count) || count < 0) {
+			return
+		}
+
+		if (list.pendingTimer !== undefined) {
+			clearTimeout(list.pendingTimer)
+			delete list.pendingTimer
+		}
+
+		list.pending = new Map()
+		list.expected = Math.min(count, this.getNumLabelsToPoll())
+		if (list.expected === 0) {
+			this.applyLabelList(type)
+			return
+		}
+
+		for (let i = 0; i < list.expected; i++) {
+			this.sendOsc(`/eos/get/${type}/index/${i}`, [], false)
+		}
+
+		// Don't wait forever if a reply goes missing; use what has arrived.
+		list.pendingTimer = setTimeout(() => {
+			delete list.pendingTimer
+			this.applyLabelList(type)
+		}, 5000)
+	}
+
+	handleLabelListRecord(type, targetNumber, index, label) {
+		const list = this.labelLists[type]
+		if (!list || list.pending === undefined) {
+			// Not part of a list we asked for.
+			return
+		}
+		if (index === undefined || index === null || index === '' || !Number.isFinite(Number(index))) {
+			return
+		}
+		index = Number(index)
+		if (index >= list.expected) {
+			return
+		}
+
+		list.pending.set(index, { num: targetNumber, label: label === undefined || label === null ? '' : String(label) })
+		if (list.pending.size >= list.expected) {
+			this.applyLabelList(type)
+		}
+	}
+
+	/**
+	 * Replaces a type's labels with the newly read ones, and updates the variables (and presets) to match.
+	 */
+	applyLabelList(type) {
+		const list = this.labelLists[type]
+		if (list.pending === undefined) {
+			return
+		}
+		if (list.pendingTimer !== undefined) {
+			clearTimeout(list.pendingTimer)
+			delete list.pendingTimer
+		}
+
+		list.records = [...list.pending.entries()].sort((a, b) => a[0] - b[0]).map((entry) => entry[1])
+		list.pending = undefined
+
+		const numbers = list.records.map((record) => record.num)
+		const defined = this.labelDefinedNumbers[type]
+		const definitionsChanged = numbers.length !== defined.length || numbers.some((num, i) => num !== defined[i])
+
+		if (definitionsChanged) {
+			// Batch definition and preset rebuilds, as the three types usually arrive together.
+			if (this.labelDefinitionsTimer === undefined) {
+				this.labelDefinitionsTimer = setTimeout(() => {
+					delete this.labelDefinitionsTimer
+					for (const t of constants.LABEL_NAMES) {
+						this.labelDefinedNumbers[t] = this.labelLists[t].records.map((record) => record.num)
+					}
+					this.setVariableDefinitions(GetVariableDefinitions(this))
+					this.updatePresets()
+					for (const t of constants.LABEL_NAMES) {
+						this.setLabelListValues(t)
+					}
+				}, 100)
+			}
+		} else {
+			this.setLabelListValues(type)
+		}
+	}
+
+	setLabelListValues(type) {
+		const values = {}
+		for (const record of this.labelLists[type].records) {
+			values[`${type}_label_${this.cueNumberToVariableId(record.num)}`] = record.label
+		}
+		if (Object.keys(values).length > 0) {
+			this.setInstanceStates(values, true)
+		}
+	}
+
+	/**
+	 * Converts a cue number into something usable in a variable id (variable ids can't contain dots).
+	 */
+	cueNumberToVariableId(cueNumber) {
+		return String(cueNumber).replace(/\./g, '_')
+	}
+
+	clearCueListTimers() {
+		if (this.cueListRefreshTimer !== undefined) {
+			clearTimeout(this.cueListRefreshTimer)
+			delete this.cueListRefreshTimer
+		}
+		if (this.cueListDefinitionsTimer !== undefined) {
+			clearTimeout(this.cueListDefinitionsTimer)
+			delete this.cueListDefinitionsTimer
+		}
+	}
+
+	/**
+	 * Forgets all cue list data and empties the related variables.
+	 */
+	clearCueList() {
+		if (this.cueListDefinitionsTimer !== undefined) {
+			clearTimeout(this.cueListDefinitionsTimer)
+			delete this.cueListDefinitionsTimer
+		}
+		this.cueListRecords = new Map()
+
+		// Drop the per-cue-number variables, and re-create the positional ones for the configured count.
+		this.cueListDefinedNumbers = []
+		this.setVariableDefinitions(GetVariableDefinitions(this))
+
+		const emptyValues = { cue_list_count: '' }
+		for (let i = 1; i <= this.getNumCuesToPoll(); i++) {
+			emptyValues[`cue_index_${i}_num`] = ''
+			emptyValues[`cue_index_${i}_label`] = ''
+		}
+		this.setInstanceStates(emptyValues, true)
+	}
+
+	/**
+	 * Requests the cues of the configured cue list from the console.
+	 * The console first answers with the cue count (see handleCueListCount).
+	 */
+	requestCueList() {
+		if (this.cueListRefreshTimer !== undefined) {
+			clearTimeout(this.cueListRefreshTimer)
+			delete this.cueListRefreshTimer
+		}
+		this.clearCueList()
+
+		if (this.isCueListPollingEnabled()) {
+			this.sendOsc(`/eos/get/cue/${this.getCueListToPoll()}/count`, [], false)
+		}
+	}
+
+	/**
+	 * Re-reads the cue list shortly, so a burst of change notifications results in a single refresh.
+	 */
+	scheduleCueListRefresh() {
+		if (this.cueListRefreshTimer !== undefined) {
+			clearTimeout(this.cueListRefreshTimer)
+		}
+		this.cueListRefreshTimer = setTimeout(() => {
+			delete this.cueListRefreshTimer
+			this.requestCueList()
+		}, 500)
+	}
+
+	handleCueListCount(cueList, count) {
+		if (Number(cueList) !== this.getCueListToPoll() || !this.isCueListPollingEnabled()) {
+			return
+		}
+
+		count = Number(count)
+		if (!Number.isFinite(count) || count < 0) {
+			return
+		}
+
+		this.setInstanceStates({ cue_list_count: String(count) }, true)
+
+		const toRequest = Math.min(count, this.getNumCuesToPoll())
+		for (let i = 0; i < toRequest; i++) {
+			this.sendOsc(`/eos/get/cue/${cueList}/index/${i}`, [], false)
+		}
+	}
+
+	handleCueListRecord(cueList, cueNumber, cuePart, index, label) {
+		if (Number(cueList) !== this.getCueListToPoll() || !this.isCueListPollingEnabled()) {
+			return
+		}
+
+		// Only the cue itself (part 0) is tracked, not its parts.
+		if (Number(cuePart) !== 0) {
+			return
+		}
+
+		if (index === undefined || index === null || index === '' || !Number.isFinite(Number(index))) {
+			return
+		}
+		index = Number(index)
+
+		this.cueListRecords.set(index, { num: cueNumber, label: label || '' })
+		this.updateCueListVariables()
+	}
+
+	/**
+	 * The cues read so far, in list order, limited to the configured number of cues.
+	 */
+	getSortedCueListRecords() {
+		return [...this.cueListRecords.entries()]
+			.sort((a, b) => a[0] - b[0])
+			.slice(0, this.getNumCuesToPoll())
+			.map((entry) => entry[1])
+	}
+
+	/**
+	 * Recomputes the cue_index_X_* variables, and the cue_N_label variables once their definitions exist.
+	 */
+	updateCueListVariables() {
+		const cues = this.getSortedCueListRecords()
+
+		const values = {}
+		for (let i = 1; i <= this.getNumCuesToPoll(); i++) {
+			const cue = cues[i - 1]
+			values[`cue_index_${i}_num`] = cue ? cue.num : ''
+			values[`cue_index_${i}_label`] = cue ? cue.label : ''
+		}
+
+		const cueNumbers = cues.map((cue) => cue.num)
+		const definitionsChanged =
+			cueNumbers.length !== this.cueListDefinedNumbers.length ||
+			cueNumbers.some((num, i) => num !== this.cueListDefinedNumbers[i])
+
+		if (!definitionsChanged) {
+			for (const cue of cues) {
+				values[`cue_${this.cueNumberToVariableId(cue.num)}_label`] = cue.label
+			}
+		} else if (this.cueListDefinitionsTimer === undefined) {
+			// New cue numbers need new variable definitions. Batch them, as cues arrive one message at a time.
+			this.cueListDefinitionsTimer = setTimeout(() => {
+				delete this.cueListDefinitionsTimer
+				this.cueListDefinedNumbers = this.getSortedCueListRecords().map((cue) => cue.num)
+				this.setVariableDefinitions(GetVariableDefinitions(this))
+				this.updateCueListVariables()
+			}, 250)
+		}
+
+		this.setInstanceStates(values, true)
 	}
 
 	/**
@@ -671,9 +1042,8 @@ class ModuleInstance extends InstanceBase {
 
 		this.sendOsc('get/version', [])
 
-		// Get xx groups worth of labels - issue the request here to get the values,
-		// they are caught in the on.message elsewhere
-		this.getLabelNames()
+		// Labels aren't requested here: this runs on every channel selection change, and labels don't depend
+		// on the selection. They're read on connect, on show load, and when the console reports a change.
 	}
 
 	/**

@@ -266,6 +266,61 @@ module.exports = function (self) {
 				self.setIntensity('group', id, value)
 			},
 		},
+		select_group: {
+			name: 'Select Group',
+			options: [
+				{
+					id: 'id',
+					type: 'textinput',
+					label: 'Group',
+					default: '1',
+					regex: Regex.FLOAT_OR_INT,
+					useVariables: true,
+				},
+				{
+					id: 'method',
+					type: 'dropdown',
+					label: 'Method',
+					default: 'osc',
+					tooltip:
+						"OSC selects the group without using the command line. Command line runs 'Group N Enter', replacing what's on that user's command line.",
+					choices: [
+						{ id: 'osc', label: 'OSC' },
+						{ id: 'cmd', label: 'Command line (Group N Enter)' },
+					],
+				},
+				{
+					id: 'user',
+					type: 'textinput',
+					label: 'Run as user (blank = connection user)',
+					tooltip:
+						"Eos keeps a separate selection per user. Leave blank to select on this connection's User ID, or enter the user the console operator works as (e.g. 1) to select there.",
+					default: '',
+					useVariables: true,
+				},
+			],
+			callback: async (event, context) => {
+				const id = (await context.parseVariablesInString(event.options.id || '')).trim()
+				if (!/^\d+(\.\d+)?$/.test(id)) {
+					self.log('warn', `Select Group: '${id}' is not a group number`)
+					return
+				}
+
+				const user = (await context.parseVariablesInString(event.options.user || '')).trim()
+				if (user !== '' && !/^\d+$/.test(user)) {
+					self.log('warn', `Select Group: '${user}' is not a user number`)
+					return
+				}
+				// /eos/user/<N>/... runs a single command as that user, without changing the connection's user.
+				const prefix = user === '' ? '' : `user/${user}/`
+
+				if (event.options.method === 'cmd') {
+					self.sendOsc(`${prefix}newcmd`, [{ type: 's', value: `Group ${id}#` }])
+				} else {
+					self.sendOsc(`${prefix}group/${id}`, [])
+				}
+			},
+		},
 		sub_intensity: {
 			name: 'Submaster Intensity',
 			options: [

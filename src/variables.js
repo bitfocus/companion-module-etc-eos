@@ -71,15 +71,29 @@ const GetVariableDefinitions = function (self) {
 		variableDefinitions.push({ variableId: `softkey_label_${i}`, name: `Soft key ${i}'s label` })
 	}
 
-	// Titles
-	 // add other labels here. Intensity palette, Focus palette … 
-	const numLabels = typeof self.getNumLabelsToPoll === 'function' ? self.getNumLabelsToPoll() : constants.DEFAULT_NUM_LABELS
-	for (let name = 0; name < constants.LABEL_NAMES.length; name++) {
-		const element = constants.LABEL_NAMES[name];
-		for (let i = 1; i <= numLabels; i++) {
-			variableDefinitions.push({ variableId: `${element}_label_${i}`, name: `${element} ${i}'s label` })
+	// Group, preset and macro labels: only for targets that exist in the show (read by index from the console)
+	for (const type of constants.LABEL_NAMES) {
+		for (const num of self.labelDefinedNumbers?.[type] || []) {
+			const id = String(num).replace(/\./g, '_')
+			variableDefinitions.push({ variableId: `${type}_label_${id}`, name: `${type} ${num}'s label` })
 		}
 	}
+
+	// Cues of the configured cue list, by position (cue_index_X_*) and by cue number (cue_N_label).
+	const cueList = typeof self.getCueListToPoll === 'function' ? self.getCueListToPoll() : constants.DEFAULT_CUE_LIST
+	const numCues = typeof self.getNumCuesToPoll === 'function' ? self.getNumCuesToPoll() : constants.DEFAULT_NUM_CUES
+	if (cueList > 0 && numCues > 0) {
+		variableDefinitions.push({ variableId: 'cue_list_count', name: `Number of cues in cue list ${cueList}` })
+		for (let i = 1; i <= numCues; i++) {
+			variableDefinitions.push({ variableId: `cue_index_${i}_num`, name: `Cue list ${cueList}: cue number at position ${i}` })
+			variableDefinitions.push({ variableId: `cue_index_${i}_label`, name: `Cue list ${cueList}: cue label at position ${i}` })
+		}
+		for (const cueNumber of self.cueListDefinedNumbers || []) {
+			const id = String(cueNumber).replace(/\./g, '_')
+			variableDefinitions.push({ variableId: `cue_${id}_label`, name: `Cue ${cueList}/${cueNumber} label` })
+		}
+	}
+
 	return variableDefinitions
 }
 

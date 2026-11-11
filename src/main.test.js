@@ -32,8 +32,15 @@ describe('ModuleInstance', () => {
 			const configFields = instance.getConfigFields()
 
 			expect(Array.isArray(configFields)).toBe(true)
-			expect(configFields.length).toBe(4)
-			expect(configFields.map((field) => field.id)).toEqual(['host', 'user_id', 'use_slip', 'num_labels'])
+			expect(configFields.length).toBe(6)
+			expect(configFields.map((field) => field.id)).toEqual([
+				'host',
+				'user_id',
+				'use_slip',
+				'num_labels',
+				'cue_list',
+				'num_cues',
+			])
 		})
 	})
 
@@ -123,6 +130,112 @@ describe('ModuleInstance', () => {
 				cue_active_num: '',
 			})
 			expect(instance.checkFeedbacks).toHaveBeenCalledWith('active_cue')
+		})
+	})
+	describe('cue list variables', () => {
+		beforeEach(() => {
+			jest.useFakeTimers()
+			instance.config = { host: '127.0.0.1', cue_list: 1, num_cues: 3 }
+			instance.cueListRecords = new Map()
+			instance.cueListDefinedNumbers = []
+			instance.sendOsc = jest.fn()
+			instance.setVariableDefinitions = jest.fn()
+		})
+
+		afterEach(() => {
+			instance.clearCueListTimers()
+			jest.useRealTimers()
+		})
+
+		const definedIds = () => {
+			const calls = instance.setVariableDefinitions.mock.calls
+			return calls[calls.length - 1][0].map((def) => def.variableId)
+		}
+
+		test.each([
+			[{ cue_list: 2, num_cues: 12 }, 2, 12],
+			[{ cue_list: '0', num_cues: '0' }, 0, 0],
+			[{ cue_list: -1, num_cues: 'abc' }, constants.DEFAULT_CUE_LIST, constants.DEFAULT_NUM_CUES],
+			[undefined, constants.DEFAULT_CUE_LIST, constants.DEFAULT_NUM_CUES],
+		])('config %p -> list %p, cues %p', (config, list, cues) => {
+			instance.config = config
+			expect(instance.getCueListToPoll()).toBe(list)
+			expect(instance.getNumCuesToPoll()).toBe(cues)
+		})
+
+		test('requests the count, then up to num_cues cues by index', () => {
+			instance.requestCueList()
+			expect(instance.sendOsc).toHaveBeenCalledWith('/eos/get/cue/1/count', [], false)
+
+			instance.handleCueListCount('1', 10)
+			expect(instance.instanceState.cue_list_count).toBe('10')
+			expect(instance.sendOsc).toHaveBeenCalledWith('/eos/get/cue/1/index/0', [], false)
+			expect(instance.sendOsc).toHaveBeenCalledWith('/eos/get/cue/1/index/2', [], false)
+			expect(instance.sendOsc).not.toHaveBeenCalledWith('/eos/get/cue/1/index/3', [], false)
+		})
+
+		test('does not poll when the cue list is 0', () => {
+			instance.config.cue_list = 0
+			instance.requestCueList()
+			expect(instance.sendOsc).not.toHaveBeenCalled()
+			expect(definedIds()).not.toContain('cue_list_count')
+		})
+
+		test('fills positional and per-number variables', () => {
+			instance.handleCueListRecord('1', '1', '0', '0', 'Preshow')
+			instance.handleCueListRecord('1', '10.5', '0', '1', 'Blackout')
+			instance.handleCueListRecord('1', '10.5', '2', '1', 'A part') // parts are ignored
+			instance.handleCueListRecord('2', '7', '0', '2', 'Other list') // other lists are ignored
+
+			expect(instance.instanceState).toMatchObject({
+				cue_index_1_num: '1',
+				cue_index_1_label: 'Preshow',
+				cue_index_2_num: '10.5',
+				cue_index_2_label: 'Blackout',
+				cue_index_3_num: '',
+				cue_index_3_label: '',
+			})
+
+			// Per-number variables are defined in a batch, then filled
+			jest.advanceTimersByTime(250)
+			expect(definedIds()).toEqual(expect.arrayContaining(['cue_1_label', 'cue_10_5_label', 'cue_index_3_label']))
+			expect(instance.instanceState).toMatchObject({ cue_1_label: 'Preshow', cue_10_5_label: 'Blackout' })
+		})
+
+		test('reads the cue position from the first argument, not the address', () => {
+			instance.log = jest.fn()
+			instance.oscSocket = { on: jest.fn(), open: jest.fn(), socket: { on: jest.fn() } }
+			instance.setOscSocketListeners()
+			const onMessage = instance.oscSocket.on.mock.calls.find((call) => call[0] === 'message')[1]
+
+			// Eos replies to every cue with list/0/<arg count> in the address
+			const reply = (num, index, label) => ({
+				address: `/eos/out/get/cue/1/${num}/0/list/0/30`,
+				args: [
+					{ type: 'i', value: index },
+					{ type: 's', value: 'uid' },
+					{ type: 's', value: label },
+				],
+			})
+			onMessage(reply('1', 0, 'Preshow'))
+			onMessage(reply('2', 1, 'Top of show'))
+			onMessage(reply('4', 2, 'Blackout'))
+
+			expect(instance.instanceState).toMatchObject({
+				cue_index_1_num: '1',
+				cue_index_1_label: 'Preshow',
+				cue_index_2_num: '2',
+				cue_index_3_num: '4',
+				cue_index_3_label: 'Blackout',
+			})
+		})
+
+		test('a change notification re-reads the list once', () => {
+			instance.scheduleCueListRefresh()
+			instance.scheduleCueListRefresh()
+			jest.advanceTimersByTime(500)
+			expect(instance.sendOsc).toHaveBeenCalledTimes(1)
+			expect(instance.sendOsc).toHaveBeenCalledWith('/eos/get/cue/1/count', [], false)
 		})
 	})
 })

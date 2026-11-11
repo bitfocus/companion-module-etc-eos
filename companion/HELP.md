@@ -46,7 +46,9 @@ _A User ID of `-1` refers to whichever user the console is currently set to._
 
 The **Use TCP SLIP** setting will use port 3037 with TCP 1.1 SLIP protocol, otherwise it will use port 3032. This is a new option since EOS 3.1 for 3rd party connections.
 
-The **Labels to poll** setting controls how many `group_label_X`, `preset_label_X`, and `macro_label_X` variables are created and actively queried from the console.
+The **Labels to poll** setting is the most groups, presets and macros (each) whose labels are read from the console. Only ones that exist in the show are read, so with 200 groups a setting of 9999 reads 200 groups, not 9999. Labels are read on connect, when a show is loaded, and when they change on the console.
+
+The **Cue list for cue variables** and **Cues to poll** settings control the per-cue variables described in **Cue list variables** below. Set either one to `0` to turn them off.
 
 ## Actions
 
@@ -65,6 +67,7 @@ While it's not practical to create specific actions for every possible command a
 | Press Key                      | Presses one of the console's keys. A full list of keys can be found in the latest [Eos Family Operations Manual](https://www.etcconnect.com/WorkArea/DownloadAsset.aspx?id=10737500523) (links to v2.9.1); do a search for `Eos OSC Keys` (use the value from the first column).                                                   |
 | Channel Intensity              | Sets a channel's intensity to a percentage, or to a keyword: `out`, `full`, `min`, `max`.                                                                                                                                                                                                                                          |
 | Group Intensity                | Sets a group's intensity to a percentage, or to a keyword: `out`, `full`, `min`, `max`.                                                                                                                                                                                                                                            |
+| Select Group                   | Selects a group, the same as `Group N Enter`. **Method** OSC leaves the command line alone; **Command line** types it on the command line, replacing anything there. **Run as user** selects on another Eos user (e.g. `1`, the operator) instead of the connection's User ID; leave blank for the connection's user.                                                                                                                                              |
 | Submaster Intensity            | Sets a submaster's intensity to a percentage, or to a keyword: `out`, `full`, `min`, `max`.                                                                                                                                                                                                                                        |
 | Submaster Bump                 | Simulates a submaster's bump button. The **State** property can be:<br /> - Press and Release<br /> - Press and Hold<br /> - Release<br /><br />_Hint: Add this action to a down/on action to **Press and Hold**, and a **Release** action to up/off, then make the button **Latch/Toggle**._                                      |
 | Fire Preset                    | Runs the preset given its number.                                                                                                                                                                                                                                                                                                  |
@@ -256,15 +259,30 @@ the fixture selected
 
 There is a sample Stream Deck + configuration file in the github repository that demonstrates how this can be used effectively to manage all encoders on a single Stream Deck + page.
 
+## Cue list variables
+
+The module reads the cues of one cue list (set with **Cue list for cue variables**, default `1`), up to the **Cues to poll** count (default 30), and keeps them up to date when cues are added, changed or deleted on the console.
+
+| Variable                 | Description                                                                 | Example value |
+| ------------------------ | --------------------------------------------------------------------------- | ------------- |
+| cue_list_count           | Number of cues in the cue list                                              | 42            |
+| cue_index_X_num          | Cue number of the Xth cue in the list (X starts at 1)                       | 10.5          |
+| cue_index_X_label        | Label of the Xth cue in the list                                            | Blackout      |
+| cue_N_label              | Label of cue number N. Dots in the cue number become underscores.           | Blackout      |
+
+For example, cue 10.5's label is `$(etc-eos:cue_10_5_label)`, and a button showing the third cue in the list could use `$(etc-eos:cue_index_3_num)\n$(etc-eos:cue_index_3_label)`.
+
+`cue_N_label` variables are only created for cues that exist in the list. Cue parts aren't included.
+
 ## Group labels
 
 To allow the use of buttons to select groups, and capture the group label for use on the buttons, there are a set of variables that hold this information.
 
-The module captures group labels from `group_label_1` up to your configured **Labels to poll** value.
+Use the **Select Group** action to select a group from a button, and put `$(etc-eos:group_label_N)` in the button's text to show its label. The **Groups** presets set up both for each group.
 
-By default this is:
+Eos keeps a separate selection for each user. If this connection uses its own **User ID** (say 99) so it doesn't disturb the operator, a group selected on it is only selected for user 99. Set the action's **Run as user** to the operator's user (e.g. `1`) to select the group on their command line instead.
 
-group_label_1 through group_label_30
+The module creates a `group_label_N` variable for each group in the show (likewise `preset_label_N` and `macro_label_N`), up to the **Labels to poll** count, in the order they appear in the console's list. N is the group number; dots become underscores, so group 5.5's label is `$(etc-eos:group_label_5_5)`. Groups that don't exist have no variable.
 
 ## Feedbacks
 
@@ -287,6 +305,7 @@ Presets help you quickly configure new buttons. There are several presets availa
 | Cues     | Cue #                      | Runs the cue number. Adds feedback to show whether this cue is active or is pending. _Don't forget to change the cue number in the feedbacks too!_ |
 | Cues     | Go [CUE] [INTENSITY%]      | The same as the "Go" button on your console. Also shows the pending cue number and the cue's intensity as the button's text.                       |
 | Cues     | Stop/Back                  | The same as the "Stop/Back" button on your console.                                                                                                |
+| Groups   | G# [GROUP LABEL]           | Selects the group. Shows the group number and its label. One preset per group in the show.                                                          |
 | Status   | [CURRENT CUE NUMBER/LABEL] | _No action when pressed._ Shows the number and label of the current cue.                                                                           |
 | Status   | [SHOW NAME]                | _No action when pressed._ Shows the name of the loaded show.                                                                                       |
 | Status   | [COMMAND LINE]             | _No action when pressed._ Shows the command line for the user (set in the module's config).                                                        |
